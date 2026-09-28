@@ -81,8 +81,8 @@ services:
     container_name: inventory_nginx
     restart: always
     ports:
-      - "80:80"
-      - "443:443"
+      - "${HTTP_PORT:-8080}:80"
+      - "${HTTPS_PORT:-443}:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
@@ -157,6 +157,7 @@ services:
     image: grafana/loki:2.9.2
     container_name: inventory_loki
     restart: always
+    user: "0:0"
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
@@ -196,7 +197,10 @@ services:
     container_name: inventory_mysql_exporter
     restart: always
     environment:
-      - DATA_SOURCE_NAME=${MYSQL_USER}:${MYSQL_PASSWORD}@(db:3306)/${MYSQL_DATABASE}
+      - MYSQLD_EXPORTER_PASSWORD=${MYSQL_PASSWORD}
+    command:
+      - '--mysqld.address=db:3306'
+      - '--mysqld.username=${MYSQL_USER}'
     networks:
       - backend-net
       - monitoring-net
