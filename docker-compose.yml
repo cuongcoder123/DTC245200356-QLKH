@@ -1,0 +1,237 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # TẦNG DỮ LIỆU (DATABASE LAYER)
+  # ==========================================
+  db:
+    image: mysql:8.0
+    container_name: inventory_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - backend-net
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: inventory_phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_ABSOLUTE_URI: https://localhost/pma/
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    networks:
+      - backend-net
+      - frontend-net
+    depends_on:
+      - db
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+
+  # ==========================================
+  # TẦNG ỨNG DỤNG (APPLICATION LAYER)
+  # ==========================================
+  web:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: inventory_web
+    restart: always
+    environment:
+      DB_HOST: db
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: ${MYSQL_USER}
+      DB_PASS: ${MYSQL_PASSWORD}
+    volumes:
+      - ./app/src:/var/www/html
+      - app_logs:/var/log/app
+    networks:
+      - backend-net
+      - frontend-net
+      - monitoring-net
+    depends_on:
+      - db
+    deploy:
+      resources:
+        limits:
+          cpus: '0.75'
+          memory: 512M
+
+  # ==========================================
+  # TẦNG CỔNG BẢO MẬT & REVERSE PROXY (NGINX)
+  # ==========================================
+  nginx:
+    image: nginx:alpine
+    container_name: inventory_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - frontend-net
+      - monitoring-net
+    depends_on:
+      - web
+      - phpmyadmin
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+
+  # ==========================================
+  # TẦNG GIÁM SÁT THỜI GIAN THỰC (PROMETHEUS & GRAFANA)
+  # ==========================================
+  prometheus:
+    image: prom/prometheus:v2.49.1
+    container_name: inventory_prometheus
+    restart: always
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.route-prefix=/'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - monitoring-net
+      - frontend-net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+
+  grafana:
+    image: grafana/grafana:10.3.3
+    container_name: inventory_grafana
+    restart: always
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-Admin@123456}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    networks:
+      - monitoring-net
+      - frontend-net
+    depends_on:
+      - prometheus
+      - loki
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+
+  # ==========================================
+  # TẦNG QUẢN LÝ LOG TẬP TRUNG (LOKI & PROMTAIL)
+  # ==========================================
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: inventory_loki
+    restart: always
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/tmp/loki
+    networks:
+      - monitoring-net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+
+  promtail:
+    image: grafana/promtail:2.9.2
+    container_name: inventory_promtail
+    restart: always
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - nginx_logs:/var/log/nginx:ro
+      - app_logs:/var/log/app:ro
+    networks:
+      - monitoring-net
+    depends_on:
+      - loki
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+
+  # ==========================================
+  # CÁC EXPORTER THU THẬP CHỈ SỐ (METRICS EXPORTERS)
+  # ==========================================
+  mysql_exporter:
+    image: prom/mysqld-exporter:v0.15.1
+    container_name: inventory_mysql_exporter
+    restart: always
+    environment:
+      - DATA_SOURCE_NAME=${MYSQL_USER}:${MYSQL_PASSWORD}@(db:3306)/${MYSQL_DATABASE}
+    networks:
+      - backend-net
+      - monitoring-net
+    depends_on:
+      - db
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+
+  node_exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: inventory_node_exporter
+    restart: always
+    networks:
+      - monitoring-net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+
+volumes:
+  db_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  nginx_logs:
+  app_logs:
+
+networks:
+  frontend-net:
+    driver: bridge
+  backend-net:
+    driver: bridge
+  monitoring-net:
+    driver: bridge
