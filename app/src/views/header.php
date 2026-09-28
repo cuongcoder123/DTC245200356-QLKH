@@ -15,10 +15,10 @@ $currentUser = get_logged_in_user();
     <meta name="description" content="Hệ thống Quản lý Kho hàng Thông minh (Inventory Management System) - Đề tài DevOps/SRE 05">
     <title><?= htmlspecialchars($pageTitle) ?> | Kho Hàng DTC245200356</title>
     
-    <!-- Google Fonts -->
+    <!-- Google Fonts chuan Tieng Viet (Be Vietnam Pro & Inter) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">

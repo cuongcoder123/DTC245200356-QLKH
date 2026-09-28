@@ -251,17 +251,17 @@ if (ctxTrend) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 12 } }
+                    labels: { color: '#94a3b8', font: { family: 'Be Vietnam Pro', size: 12 } }
                 }
             },
             scales: {
                 y: {
                     grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                    ticks: { color: '#94a3b8' }
+                    ticks: { color: '#94a3b8', font: { family: 'Be Vietnam Pro' } }
                 },
                 x: {
                     grid: { display: false },
-                    ticks: { color: '#94a3b8' }
+                    ticks: { color: '#94a3b8', font: { family: 'Be Vietnam Pro' } }
                 }
             }
         }
@@ -294,7 +294,7 @@ if (ctxCat) {
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 }, boxWidth: 12 }
+                    labels: { color: '#94a3b8', font: { family: 'Be Vietnam Pro', size: 11 }, boxWidth: 12 }
                 }
             },
             cutout: '65%'
