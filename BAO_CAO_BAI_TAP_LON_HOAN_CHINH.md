@@ -102,17 +102,68 @@ Cơ sở dữ liệu `inventory_db` gồm 6 bảng chuẩn hóa:
 5. `inventory_transactions`: Ghi nhận lịch sử Nhập kho (`IMPORT`) và Xuất kho (`EXPORT`), số lượng, đơn giá, đối tác, ghi chú và người thực hiện.
 6. `system_logs`: Lưu vết nhật ký hoạt động hệ thống nội bộ.
 
-### 3.2. Chức năng Nghiệp vụ Website Quản lý Kho
-Ứng dụng Web được xây dựng hoàn chỉnh với giao diện hiện đại:
-- **Dashboard Tổng quan:** 4 thẻ KPI động (Tổng SKU, Số lượng sắp hết hàng, Tổng giá trị tài sản kho tính bằng VNĐ, Số giao dịch tháng), biểu đồ xu hướng Nhập/Xuất 6 tháng, biểu đồ cơ cấu theo nhóm hàng, danh sách cảnh báo tồn thấp kèm nút nhập nhanh.
-- **Quản lý Hàng hóa:** Tìm kiếm, lọc theo danh mục, trạng thái tồn (Đủ hàng, Sắp hết, Hết hàng), Thêm mới, Sửa, Xóa và Xuất dữ liệu ra file CSV.
-- **Quản lý Danh mục & Nhà cung cấp:** Thao tác CRUD đầy đủ, hiển thị tổng giá trị hàng hóa theo từng nhóm.
-- **Quản lý Giao dịch Nhập / Xuất Kho:**
-  - *Nhập kho:* Chọn nhà cung cấp, sản phẩm, số lượng, đơn giá -> Hệ thống tự động tăng `stock_quantity`, sinh mã phiếu `NK-YYYYMMDD-XXXX`, ghi nhật ký giao dịch.
-  - *Xuất kho:* Chọn sản phẩm, số lượng, đơn giá -> Hệ thống kiểm tra số lượng tồn kho. Nếu không đủ hàng, hệ thống từ chối và ghi log `ERROR`. Nếu đủ hàng, hệ thống tự động trừ `stock_quantity`, sinh mã phiếu `XK-YYYYMMDD-XXXX`.
-  - *Xem & In Phiếu Kho:* Giao diện in ấn chuẩn hóa chuyên nghiệp, có chữ ký người nhận và thủ kho.
-- **Báo cáo & Thống kê Kho:** Báo cáo thẩm định tài sản vốn tồn kho, doanh thu dự kiến, tải file báo cáo CSV hoặc in trực tiếp.
-- **Trung tâm Giám sát & Sandbox LogQL:** Tích hợp công cụ sinh log mẫu để kiểm thử truy vấn LogQL trực tiếp.
+### 3.2. Chức năng Nghiệp vụ & Giao diện Website Quản lý Kho
+
+Ứng dụng Web được xây dựng hoàn chỉnh với giao diện hiện đại (Dark Theme cao cấp, font chữ Be Vietnam Pro chuẩn tiếng Việt, hiệu ứng kính mờ Glassmorphism) đáp ứng trọn vẹn nghiệp vụ quản lý kho thông minh:
+
+#### 3.2.1. Giao diện Đăng nhập Hệ thống (Authentication & RBAC)
+- Xác thực an toàn với thuật toán băm mật khẩu `BCRYPT`, bảo vệ phiên làm việc qua Cookie bảo mật (`HttpOnly`, `SameSite=Lax`).
+- Phân quyền chặt chẽ theo vai trò người dùng: `Admin` (Quản trị viên toàn quyền) và `Staff` (Nhân viên thủ kho nghiệp vụ).
+
+![Hình 3.1: Giao diện Đăng nhập An toàn Hệ thống](docs/images/01_dang_nhap.png)
+
+#### 3.2.2. Bảng Điều khiển Tổng quan (Dashboard Quản lý Kho)
+- **4 Thẻ KPI động:** Thống kê trực tiếp theo thời gian thực:
+  - *Tổng Mặt Hàng:* 13 mã SKU hoạt động.
+  - *Cảnh Báo Tồn Thấp:* 3 mặt hàng có số lượng tồn dưới ngưỡng an toàn `min_stock`.
+  - *Tổng Giá Trị Tồn Kho:* 823.850.000 VNĐ tính theo giá vốn nhập kho.
+  - *Giao Dịch Tháng:* Thống kê các phiếu phát sinh trong kỳ.
+- **Biểu đồ trực quan:**
+  - *Biểu đồ cột xu hướng Nhập/Xuất 6 tháng gần nhất* bằng Chart.js.
+  - *Biểu đồ Donut cơ cấu phân bổ vốn tồn kho* theo từng nhóm hàng hóa.
+- **Bảng Cảnh báo Hàng sắp hết:** Hiển thị tức thì các sản phẩm cần bổ sung kèm nút tạo nhanh phiếu nhập.
+
+![Hình 3.2: Bảng Điều khiển Tổng quan Dashboard](docs/images/02_tong_quan_dashboard.png)
+
+#### 3.2.3. Phân hệ Quản lý Hàng hóa (Products Management)
+- Hiển thị danh mục toàn bộ sản phẩm với mã SKU, tên hàng, nhóm ngành, đơn vị tính (Chiếc, Bộ, Thùng, Thanh), đơn giá nhập, giá bán niêm yết và số lượng tồn kho.
+- Badge trạng thái trực quan: `Còn hàng` (xanh lá) và `Sắp hết` (vàng cảnh báo).
+- Hỗ trợ tìm kiếm nhanh theo mã/tên, lọc theo danh mục, trạng thái tồn kho, Thêm mới, Sửa, Xóa và nút **Xuất CSV** phục vụ đối soát.
+
+![Hình 3.3: Giao diện Quản lý Danh mục Hàng hóa](docs/images/03_quan_ly_hang_hoa.png)
+
+#### 3.2.4. Phân hệ Quản lý Nhóm Sản phẩm (Categories)
+- Phân loại 5 nhóm hàng hóa chủ lực: *Linh kiện máy tính, Thiết bị mạng & Viễn thông, Thiết bị văn phòng, Phụ kiện & Ngoại vi, Thiết bị lưu trữ & Nguồn điện*.
+- Tự động thống kê số lượng mặt hàng, tổng đơn vị tồn và định giá tổng tài sản cho từng nhóm danh mục.
+
+![Hình 3.4: Giao diện Quản lý Danh mục Sản phẩm](docs/images/04_danh_muc_san_pham.png)
+
+#### 3.2.5. Phân hệ Quản lý Nhà Cung cấp (Suppliers)
+- Quản lý danh bạ đối tác cung ứng công nghệ hàng đầu (Sao Mai Tech, FPT Synnex, Cisco Systems Việt Nam, Digiworld, Viễn Đông).
+- Lưu trữ đầy đủ số điện thoại đường dây nóng, email liên hệ và địa chỉ trụ sở để kết nối khi nhập hàng.
+
+![Hình 3.5: Giao diện Quản lý Nhà Cung Cấp Đối Tác](docs/images/05_nha_cung_cap.png)
+
+#### 3.2.6. Phân hệ Giao dịch Nhập / Xuất Kho (Inventory Transactions)
+- Quản lý toàn diện lịch sử các phiếu Nhập (`NK-YYYYMMDD-XXXX`) và Xuất (`XK-YYYYMMDD-XXXX`).
+- Hiển thị số lượng biến động (số dương cho Nhập kho, số âm cho Xuất kho), đơn giá, thành tiền, đối tác và người lập phiếu.
+- Hỗ trợ xem chi tiết phiếu kho và tích hợp tính năng **In Phiếu Kho** chuyên nghiệp có đầy đủ chữ ký người nhận và thủ kho.
+
+![Hình 3.6: Giao diện Quản lý Giao dịch Nhập / Xuất Kho](docs/images/06_giao_dich_nhap_xuat.png)
+
+#### 3.2.7. Phân hệ Báo cáo & Thống kê Tài sản Kho (Reports)
+- Báo cáo tài chính kho chuyên sâu: Thẩm định vốn tồn kho thực tế (**823.850.000 VNĐ**), Doanh thu kỳ vọng (**973.450.000 VNĐ**), Lợi nhuận dự kiến.
+- Bảng thẩm định chi tiết từng mã hàng với tổng giá vốn và doanh thu kỳ vọng tương ứng. Tích hợp nút **Tải Báo Cáo CSV** và **In Báo Cáo**.
+
+![Hình 3.7: Báo cáo Thẩm định & Luân chuyển Tồn kho](docs/images/07_bao_cao_thong_ke.png)
+
+#### 3.2.8. Trung tâm Điều hành Giám sát & Sandbox Thử nghiệm LogQL
+- Trung tâm dành riêng cho kỹ sư DevOps/SRE:
+  - Hiển thị sơ đồ kiến trúc 4 tầng của toàn bộ hệ thống.
+  - Trình bày chi tiết 3 câu truy vấn LogQL chuẩn mực của đồ án.
+  - **Bộ sinh log giả lập (Log Generator):** Cung cấp các nút bấm mô phỏng sự cố thực tế (Sinh log 404, 500, lỗi xuất kho vượt tồn) để kiểm thử luồng đẩy log từ Promtail sang Loki và hiển thị tức thời lên Grafana.
+
+![Hình 3.8: Trung tâm Giám sát Hạ tầng DevOps & Sandbox LogQL](docs/images/08_trung_tam_giam_sat_logql.png)
 
 ---
 
@@ -147,20 +198,39 @@ Nginx được trang bị đầy đủ 5 tiêu chuẩn Security Headers:
 ## CHƯƠNG 5: GIÁM SÁT HỆ THỐNG VỚI PROMETHEUS & GRAFANA (COMMIT 2)
 
 ### 5.1. Mô hình Kéo Chỉ số (Prometheus Pull Model)
-Prometheus được cấu hình với chu kỳ kéo (`scrape_interval`) là 15 giây từ 4 nguồn chỉ số chính:
+Prometheus được cấu hình với chu kỳ kéo (`scrape_interval`) là 15 giây từ các nguồn chỉ số chính:
 1. `prometheus`: Chỉ số sức khỏe của chính tiến trình Prometheus (:9090).
 2. `node_exporter`: Thu thập các chỉ số phần cứng Host (CPU, RAM, Disk I/O, Network traffic).
-3. `mysql_exporter`: Thu thập chỉ số cơ sở dữ liệu MySQL (Threads connected, Queries/sec, Buffer pool usage).
-4. `cadvisor`: Thu thập tài nguyên tiêu thụ của từng Docker Container.
+3. `mysql`: Thu thập chỉ số cơ sở dữ liệu MySQL (Threads connected, Queries/sec, Buffer pool usage) qua `mysql_exporter:9104`.
 
 ### 5.2. Dashboard Tự động Provisioning trên Grafana
 Grafana được tích hợp tính năng tự động nạp cấu hình (Provisioning):
-- Nạp sẵn DataSource Prometheus và DataSource Loki mà người dùng không cần bấm cấu hình bằng tay.
+- Nạp sẵn DataSource Prometheus và DataSource Loki mà người dùng không cần cấu hình thủ công.
 - Nạp sẵn Dashboard `Hệ Thống Quản Lý Kho Hàng - Giám Sát & Logs` với:
   - Panel theo dõi MySQL Active Connections (`mysql_global_status_threads_connected`).
   - Panel theo dõi tần suất truy vấn CSDL QPS (`rate(mysql_global_status_queries[1m])`).
   - Panel trạng thái hoạt động của các exporter (`up`).
   - Panel hiển thị trực tiếp luồng log từ Loki.
+
+### 5.3. Hình ảnh Trực quan Giám sát Hạ tầng (Grafana, Prometheus & phpMyAdmin)
+
+#### 5.3.1. Bảng Giám sát Hệ thống & Nhật ký Tập trung trên Grafana
+Dashboard giám sát tự động hiển thị các thông số đo lường hiệu năng MySQL (Active Connections, QPS), trạng thái các Exporter và dòng log thời gian thực từ Loki:
+
+![Hình 5.1: Bảng Giám sát Hệ thống & Nhật ký Tập trung trên Grafana](docs/images/09_grafana_dashboard.png)
+
+#### 5.3.2. Trạng thái Hoạt động Các Exporters trên Prometheus Targets
+Giao diện quản lý Scrape Targets của Prometheus xác nhận 100% các thành phần giám sát đều đạt trạng thái **UP** khỏe mạnh:
+- `mysql`: Scrape endpoint `http://mysql_exporter:9104/metrics` -> **UP**
+- `node_exporter`: Scrape endpoint `http://node_exporter:9100/metrics` -> **UP**
+- `prometheus`: Scrape endpoint `http://localhost:9090/prometheus/metrics` -> **UP**
+
+![Hình 5.2: Trạng thái Hoạt động Xanh (UP) của các Exporter trên Prometheus Targets](docs/images/11_prometheus_targets.png)
+
+#### 5.3.3. Cổng Quản trị Cơ sở Dữ liệu phpMyAdmin qua Nginx Gateway
+Giao diện quản trị CSDL MySQL trực quan thông qua Reverse Proxy HTTPS `/pma/`:
+
+![Hình 5.3: Giao diện Quản trị CSDL phpMyAdmin qua Nginx Gateway](docs/images/10_phpmyadmin.png)
 
 ---
 

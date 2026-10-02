@@ -31,11 +31,18 @@ try {
     ]));
     
     // Hien thi giao dien thong bao loi than thien
+    header('Content-Type: text/html; charset=UTF-8');
     die("
-    <div style='font-family: sans-serif; text-align: center; padding: 50px;'>
-        <h2 style='color: #e53e3e;'>⚠️ Không thể kết nối Cơ sở Dữ liệu MySQL</h2>
-        <p>Vui lòng kiểm tra container MySQL đang chạy và thông số kết nối.</p>
-        <p style='color: #718096; font-size: 13px;'>Chi tiết: " . htmlspecialchars($e->getMessage()) . "</p>
-    </div>
+    <!DOCTYPE html>
+    <html lang='vi'>
+    <head><meta charset='UTF-8'><title>Lỗi Kết Nối CSDL</title></head>
+    <body style='font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; background: #0b0f19; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0;'>
+        <div style='background: #131d31; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 40px; max-width: 500px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);'>
+            <h2 style='color: #ef4444; margin-top: 0;'>⚠️ Không thể kết nối Cơ sở Dữ liệu MySQL</h2>
+            <p style='color: #94a3b8; line-height: 1.6;'>Vui lòng kiểm tra container MySQL đang chạy và thông số kết nối.</p>
+            <p style='background: #0f172a; padding: 10px; border-radius: 6px; color: #f87171; font-size: 13px; font-family: monospace; word-break: break-all; margin-top: 15px;'>Chi tiết: " . htmlspecialchars($e->getMessage()) . "</p>
+        </div>
+    </body>
+    </html>
     ");
 }

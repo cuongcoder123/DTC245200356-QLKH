@@ -147,8 +147,33 @@ docker compose ps
 | **Website Quản Lý Kho** | `https://localhost/` | `admin` / `Admin@123456`<br>`staff` / `Staff@123456` | Tự động chuyển hướng từ `http://localhost` sang HTTPS |
 | **phpMyAdmin** | `https://localhost/pma/` | User: `inventory_user`<br>Pass: `inventory_pass_2026`<br>*(Hoặc root / RootSecret@2026!)* | Quản trị CSDL MySQL trực quan |
 | **Grafana Dashboard** | `https://localhost/grafana/` | `admin` / `Admin@123456` | Dashboard thời gian thực & Truy vấn LogQL |
-| **Prometheus Targets** | `https://localhost/prometheus/` | *(Không yêu cầu mật khẩu)* | Kiểm tra trạng thái các exporter chỉ số |
+| **Prometheus Targets** | `https://localhost/prometheus/targets` | *(Không yêu cầu mật khẩu)* | Kiểm tra trạng thái các exporter chỉ số |
 | **Loki Service** | `http://localhost:3100` *(Internal)* | *(API push & query)* | Nhận log từ Promtail qua cổng 3100 |
+
+---
+
+## 📸 5. HÌNH ẢNH GIAO DIỆN & TÍNH NĂNG HỆ THỐNG
+
+### 5.1. Dashboard Tổng Quan & Quản Lý Kho Hàng
+![Bảng Điều Khiển Tổng Quan Dashboard](docs/images/02_tong_quan_dashboard.png)
+
+### 5.2. Quản Lý Danh Mục Hàng Hóa & Trạng Thái Tồn
+![Quản Lý Hàng Hóa](docs/images/03_quan_ly_hang_hoa.png)
+
+### 5.3. Quản Lý Giao Dịch Nhập / Xuất Kho
+![Giao Dịch Nhập / Xuất Kho](docs/images/06_giao_dich_nhap_xuat.png)
+
+### 5.4. Báo Cáo Thẩm Định & Thống Kê Tài Sản Tồn Kho
+![Báo Cáo Thẩm Định Tồn Kho](docs/images/07_bao_cao_thong_ke.png)
+
+### 5.5. Trung Tâm Giám Sát DevOps & Sandbox LogQL
+![Trung Tâm Giám Sát DevOps & Sandbox LogQL](docs/images/08_trung_tam_giam_sat_logql.png)
+
+### 5.6. Bảng Giám Sát Hạ Tầng & Logs Trên Grafana
+![Grafana Dashboard](docs/images/09_grafana_dashboard.png)
+
+### 5.7. Giám Sát Trạng Thái Các Exporters Trên Prometheus
+![Prometheus Targets](docs/images/11_prometheus_targets.png)
 
 ---
 

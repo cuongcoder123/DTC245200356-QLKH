@@ -220,6 +220,12 @@ require_once __DIR__ . '/views/navbar.php';
 </div>
 
 <script>
+// Thiet lap font chu chuan tieng Viet cho toan bo Chart.js
+if (typeof Chart !== 'undefined') {
+    Chart.defaults.font.family = "'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    Chart.defaults.color = '#94a3b8';
+}
+
 // Chart 1: Xu huong Nhap / Xuat
 const ctxTrend = document.getElementById('inventoryTrendChart');
 if (ctxTrend) {

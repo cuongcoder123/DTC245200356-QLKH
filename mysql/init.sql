@@ -2,8 +2,23 @@
 -- He thong Quan Ly Kho Hang (Inventory Management System)
 -- Ma de: 05 - DTC245200356
 
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET CHARACTER SET utf8mb4;
+
 CREATE DATABASE IF NOT EXISTS inventory_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE inventory_db;
+
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET CHARACTER SET utf8mb4;
+
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS inventory_transactions;
+DROP TABLE IF EXISTS system_logs;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS suppliers;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS users;
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- 1. Bang users: Quan ly nguoi dung va phan quyen
 CREATE TABLE IF NOT EXISTS users (

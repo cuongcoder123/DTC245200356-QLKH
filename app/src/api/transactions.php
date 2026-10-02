@@ -85,13 +85,20 @@ try {
                 'available_stock' => $prod['stock_quantity']
             ]);
 
+            header('Content-Type: text/html; charset=UTF-8');
             die("
-            <div style='font-family: sans-serif; text-align: center; padding: 50px;'>
-                <h2 style='color: #e53e3e;'>⚠️ Lỗi: Không Đủ Số Lượng Tồn Kho Để Xuất!</h2>
-                <p>Sản phẩm: <strong>{$prod['name']}</strong> ({$prod['product_code']})</p>
-                <p>Số lượng tồn hiện có: <strong style='color:#e53e3e;'>{$prod['stock_quantity']}</strong> | Yêu cầu xuất: <strong>{$quantity}</strong></p>
-                <a href='{$redirect}' style='display:inline-block; margin-top:15px; padding:10px 20px; background:#4f46e5; color:#fff; text-decoration:none; border-radius:6px;'>Quay lại</a>
-            </div>
+            <!DOCTYPE html>
+            <html lang='vi'>
+            <head><meta charset='UTF-8'><title>Lỗi Xuất Kho</title></head>
+            <body style='font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; background: #0b0f19; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0;'>
+                <div style='background: #131d31; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 40px; max-width: 520px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);'>
+                    <h2 style='color: #ef4444; margin-top: 0;'>⚠️ Lỗi: Không Đủ Số Lượng Tồn Kho!</h2>
+                    <p style='color: #cbd5e1; margin-bottom: 15px;'>Sản phẩm: <strong>{$prod['name']}</strong> ({$prod['product_code']})</p>
+                    <p style='color: #94a3b8;'>Số lượng tồn hiện có: <strong style='color:#ef4444;'>{$prod['stock_quantity']}</strong> | Yêu cầu xuất: <strong style='color:#38bdf8;'>{$quantity}</strong></p>
+                    <a href='{$redirect}' style='display:inline-block; margin-top:20px; padding:10px 24px; background:#4f46e5; color:#fff; text-decoration:none; border-radius:8px; font-weight:600;'>Quay lại giao dịch</a>
+                </div>
+            </body>
+            </html>
             ");
         }
 

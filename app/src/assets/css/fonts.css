@@ -1,0 +1,86 @@
+/* ==========================================================================
+   Self-Hosted Font Definitions (Be Vietnam Pro & Inter)
+   Dam bao 100% ho tro tieng Viet khong loi font, hoat dong ca Online & Offline
+   ========================================================================== */
+
+/* --- Be Vietnam Pro (Font chinh tieu de & noi dung) --- */
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Be Vietnam Pro'),
+       local('BeVietnamPro-Regular'),
+       url('../fonts/be-vietnam-pro-400.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local('Be Vietnam Pro Medium'),
+       local('BeVietnamPro-Medium'),
+       url('../fonts/be-vietnam-pro-500.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Be Vietnam Pro SemiBold'),
+       local('BeVietnamPro-SemiBold'),
+       url('../fonts/be-vietnam-pro-600.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Be Vietnam Pro Bold'),
+       local('BeVietnamPro-Bold'),
+       url('../fonts/be-vietnam-pro-700.ttf') format('truetype');
+}
+
+/* --- Inter (Font phu cho con so, metric, giao dien UI) --- */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Inter'),
+       local('Inter-Regular'),
+       url('../fonts/inter-400.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local('Inter Medium'),
+       local('Inter-Medium'),
+       url('../fonts/inter-500.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Inter SemiBold'),
+       local('Inter-SemiBold'),
+       url('../fonts/inter-600.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Inter Bold'),
+       local('Inter-Bold'),
+       url('../fonts/inter-700.ttf') format('truetype');
+}

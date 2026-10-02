@@ -55,7 +55,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <i class="fa-solid fa-database" style="color: #38bdf8;"></i>
             <span>phpMyAdmin <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px; margin-left: 4px;"></i></span>
         </a>
-        <a href="/prometheus/" target="_blank" class="menu-item">
+        <a href="/prometheus/targets" target="_blank" class="menu-item">
             <i class="fa-solid fa-fire-flame-curved" style="color: #ef4444;"></i>
             <span>Prometheus Targets <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px; margin-left: 4px;"></i></span>
         </a>

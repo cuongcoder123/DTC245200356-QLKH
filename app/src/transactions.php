@@ -203,7 +203,7 @@ require_once __DIR__ . '/views/navbar.php';
             <button class="modal-close" onclick="closeModal('receiptModal')">&times;</button>
         </div>
         <div class="modal-body">
-            <div id="printableArea" style="background: #fff; color: #1e293b; padding: 30px; border-radius: 8px; font-family: 'Be Vietnam Pro', 'Inter', sans-serif;">
+            <div id="printableArea" style="background: #fff; color: #1e293b; padding: 30px; border-radius: 8px; font-family: var(--font-main);">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px;">
                     <div>
                         <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0;">KHO HÀNG THÔNG MINH - ĐỀ 05</h2>

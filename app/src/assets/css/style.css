@@ -1,7 +1,9 @@
+@import url('fonts.css');
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --font-main: 'Be Vietnam Pro', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-main: 'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   
   /* Primary & Accents */
   --primary: #4f46e5;
@@ -58,7 +60,7 @@
   --shadow-glow: 0 0 20px rgba(79, 70, 229, 0.15);
 }
 
-* {
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -68,6 +70,10 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+html, body, button, input, select, textarea, optgroup {
+  font-family: var(--font-main);
 }
 
 body {
@@ -787,9 +793,18 @@ a:hover {
     border: none !important;
     box-shadow: none !important;
     max-width: 100% !important;
+    background: #fff !important;
+    padding: 0 !important;
   }
-  .printable-receipt {
-    border: 1px dashed #666;
-    padding: 20px;
+  .modal-header, .modal-footer {
+    display: none !important;
+  }
+  #printableArea {
+    display: block !important;
+    font-family: var(--font-main) !important;
+    color: #0f172a !important;
+    background: #fff !important;
+    padding: 20px !important;
+    border: 1px solid #cbd5e1 !important;
   }
 }
