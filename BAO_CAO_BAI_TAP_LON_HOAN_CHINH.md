@@ -2,10 +2,10 @@
 ## XÂY DỰNG VÀ TRIỂN KHAI HỆ THỐNG QUẢN LÝ KHO HÀNG (INVENTORY MANAGEMENT SYSTEM)
 **Đề số:** 05  
 **Học phần:** Triển khai & Quản trị Hệ thống / DevOps / An toàn Hệ thống  
-**Sinh viên thực hiện:** Nguyễn Văn Cường  
+**Sinh viên thực hiện:** Thân Phú Cường  
 **Mã số sinh viên (MSSV):** DTC245200356  
-**Lớp:** Hệ Thống Thông Tin K18  
-**Giảng viên hướng dẫn:** Giảng viên Bộ môn Mạng & Hệ thống  
+**Lớp:** CNTTK23L  
+**Giảng viên hướng dẫn:** TS. Vũ Văn Diện  
 **Thời gian hoàn thành:** Năm học 2025 - 2026  
 
 ---
@@ -18,7 +18,8 @@
 - **Chương 5:** Giám sát Hệ thống với Prometheus & Grafana (Yêu cầu 4 - Commit 2)
 - **Chương 6:** Quản lý Log Tập trung với Loki & Promtail (Yêu cầu 5 - Commit 3)
 - **Chương 7:** Áp dụng các Biện pháp Gia cố Bảo mật (Hardening) (Yêu cầu 6)
-- **Chương 8:** Kết luận & Hướng phát triển
+- **Chương 8:** Kiểm thử Hệ thống & Đánh giá Thực nghiệm
+- **Chương 9:** Kết luận & Hướng phát triển
 
 ---
 
@@ -283,17 +284,47 @@ sum by (client_ip) (count_over_time({job="nginx"} [5m]))
 
 ---
 
-## CHƯƠNG 8: KẾT LUẬN & HƯỚNG PHÁT TRIỂN
+## CHƯƠNG 8: KIỂM THỬ HỆ THỐNG & ĐÁNH GIÁ THỰC NGHIỆM
 
-### 8.1. Kết quả Đạt được
-- Xây dựng thành công ứng dụng Web Quản lý Kho hàng đầy đủ tính năng nghiệp vụ, giao diện đẹp mắt, hỗ trợ in phiếu kho và xuất dữ liệu CSV.
-- Triển khai thành công cụm 9 container dịch vụ hoạt động đồng bộ, an toàn bằng Docker Compose.
+### 8.1. Mục tiêu & Phương pháp Kiểm thử
+Quá trình kiểm thử được triển khai đa tầng nhằm đánh giá thực nghiệm 4 trụ cột hệ thống:
+1. **Kiểm thử Nghiệp vụ & Dữ liệu (Functional & ACID Testing):** Xác thực phân quyền RBAC, Nhập/Xuất kho, tính toán số dư tồn kho tức thời, ràng buộc chặn xuất âm và bảo vệ toàn vẹn dữ liệu.
+2. **Kiểm thử An ninh & Cổng Mạng (Security & Network Testing):** Kiểm tra chuyển hướng bắt buộc HTTP sang HTTPS (301 Moved Permanently), chứng chỉ SSL X.509 RSA 2048-bit, 5 tiêu chuẩn HTTP Security Headers, và kiểm tra cô lập mạng ngăn chặn quét cổng MySQL 3306 từ bên ngoài Host.
+3. **Kiểm thử Giám sát Chỉ số (Prometheus & Metrics Testing):** Chu kỳ kéo scrape 15s liên tục, xác nhận 100% các thành phần giám sát (MySQL Exporter, Node Exporter, Prometheus) đạt trạng thái UP.
+4. **Kiểm thử Nhật ký Tập trung & LogQL (Centralized Logging & LogQL Testing):** Promtail thu thập log Nginx và App JSON log, đẩy về Loki và kiểm chứng độ chính xác của 3 câu truy vấn LogQL nghiệp vụ thông qua công cụ sinh log giả lập (Log Generator).
+
+### 8.2. Bảng Ma trận Kiểm thử Thực nghiệm (Test Cases Execution Matrix)
+
+| Mã TC | Hạng mục kiểm thử | Kịch bản & Điều kiện thực hiện | Kết quả mong đợi | Kết quả thực nghiệm | Đánh giá |
+| :---: | :--- | :--- | :--- | :--- | :---: |
+| **TC-01** | **Xác thực & RBAC** | Đăng nhập hợp lệ tài khoản `admin`/`staff`; thử nghiệm đăng nhập sai mật khẩu. | Cấp Cookie phiên an toàn (`HttpOnly`, `SameSite=Lax`); chặn Brute-force mật khẩu sai. | Chuyển hướng Dashboard an toàn; thông báo lỗi bảo mật không lộ thông tin. | **PASS** |
+| **TC-02** | **Nghiệp vụ Nhập kho** | Tạo phiếu nhập kho `NK-xxxx` (+15 linh kiện CPU i7), xác nhận ghi nhận vào CSDL. | Tồn kho tăng đúng 15 đơn vị; tự động lưu lịch sử vào `inventory_transactions`. | Tồn kho cập nhật tức thì; sinh mã phiếu chuẩn hóa tự động. | **PASS** |
+| **TC-03** | **Nghiệp vụ Xuất kho** | Tạo phiếu xuất kho `XK-xxxx` với số lượng nhỏ hơn hoặc bằng số lượng tồn kho. | Khấu trừ tồn kho chính xác; ghi nhận thông tin thủ kho và đối tác nhận hàng. | Khấu trừ số lượng tồn an toàn; hiển thị tức thời trên bảng đối soát lịch sử. | **PASS** |
+| **TC-04** | **Chặn Xuất vượt tồn** | Tạo phiếu xuất với số lượng lớn hơn tồn kho thực tế hiện có. | Hệ thống từ chối giao dịch, rollback DB; hiển thị lỗi Insufficient stock. | Chặn thành công, giữ nguyên số lượng tồn; ghi log `ERROR` `{job="app"}`. | **PASS** |
+| **TC-05** | **Cảnh báo Tồn thấp** | Sản phẩm có số lượng tồn kho &le; ngưỡng an toàn `min_stock`. | Tự động gắn badge vàng "Sắp hết", cảnh báo trực tiếp trên thẻ KPI Dashboard. | Phát hiện chính xác 3 sản phẩm dưới ngưỡng an toàn và đưa lên cảnh báo. | **PASS** |
+| **TC-06** | **Chuyển hướng HTTPS** | Gửi yêu cầu HTTP không mã hóa tới cổng 80/8080 (`http://localhost:8080/`). | Nginx Gateway trả về mã `301 Moved Permanently` chuyển hướng sang HTTPS. | Chuyển hướng 100% lưu lượng truy cập sang `https://localhost/`. | **PASS** |
+| **TC-07** | **HTTP Security Headers** | Kiểm tra Headers trả về từ Nginx Gateway qua lệnh `curl -k -I https://localhost/`. | Đầy đủ 5 headers: `X-Frame-Options`, `X-Content-Type-Options`, `X-XSS`, `CSP`, `Referrer`. | Phản hồi 5/5 tiêu chuẩn an ninh bảo vệ chống Clickjacking, XSS và sniffing. | **PASS** |
+| **TC-08** | **Cô lập mạng MySQL** | Quét kết nối socket cổng 3306 từ máy chủ Host bên ngoài cụm Docker. | Cổng 3306 bị từ chối; chỉ mở nội bộ trong subnet `backend-net`. | MySQL cô lập an toàn tuyệt đối, không lộ port ra môi trường bên ngoài. | **PASS** |
+| **TC-09** | **Prometheus Scrape** | Kiểm tra Scrape Targets chu kỳ 15s tại endpoint `/prometheus/targets`. | 100% Exporter (`mysql`, `node_exporter`, `prometheus`) đạt trạng thái **UP**. | 3/3 Exporter hoạt động ổn định, thu thập dữ liệu chỉ số liên tục không gián đoạn. | **PASS** |
+| **TC-10** | **Loki & 3 Truy vấn LogQL** | Sinh log lỗi giả lập (404, 500, lỗi xuất kho) từ Sandbox và chạy 3 truy vấn LogQL. | Promtail gom log tức thời; Loki lưu trữ index; truy vấn LogQL lọc đúng dòng log. | Khớp 100% bản ghi lỗi HTTP (4xx/5xx) và lỗi giao dịch kho hàng nghiệp vụ. | **PASS** |
+
+### 8.3. Kết luận Đánh giá Thực nghiệm
+- Toàn bộ **10/10 ca kiểm thử (100%)** đều đạt kết quả **PASS**.
+- Hệ thống chứng minh khả năng vận hành ổn định, dữ liệu kho nhất quán theo chuẩn giao dịch ACID của MySQL 8.0, hạ tầng mạng phân tầng bảo mật chặt chẽ và khả năng giám sát, truy vết lỗi (Observability) đạt độ tin cậy cao theo chuẩn DevOps/SRE.
+
+---
+
+## CHƯƠNG 9: KẾT LUẬN & HƯỚNG PHÁT TRIỂN
+
+### 9.1. Kết quả Đạt được
+- Xây dựng thành công ứng dụng Web Quản lý Kho hàng đầy đủ tính năng nghiệp vụ, giao diện hiện đại, hỗ trợ in phiếu kho và xuất dữ liệu đối soát CSV.
+- Triển khai thành công cụm 10 container dịch vụ hoạt động đồng bộ, an toàn bằng Docker Compose.
 - Nginx Reverse Proxy bảo vệ toàn diện với SSL tự ký và đầy đủ các HTTP Security Headers.
-- Hệ thống giám sát thời gian thực ổn định với Prometheus và Grafana Dashboards.
+- Hệ thống giám sát thời gian thực ổn định với Prometheus và Grafana Dashboards tự động nạp cấu hình.
 - Hệ thống gom log tập trung Loki + Promtail và thực thi chính xác 3 câu truy vấn LogQL nghiệp vụ.
-- Tuân thủ đầy đủ các chuẩn mực bảo mật hệ thống và quy trình quản lý mã nguồn Git.
+- Tuân thủ đầy đủ các chuẩn mực bảo mật hệ thống (Network Isolation, Non-root user, Resource limits) và quy trình quản lý mã nguồn Git chuyên nghiệp.
 
-### 8.2. Hướng Phát triển Nâng cấp
+### 9.2. Hướng Phát triển Nâng cấp
 - Tích hợp đường ống CI/CD với GitHub Actions tự động kiểm thử và triển khai (Continuous Integration & Continuous Deployment).
 - Nâng cấp chứng chỉ SSL tự ký sang chứng chỉ miễn phí toàn cầu Let's Encrypt thông qua công cụ Certbot tự động gia hạn.
 - Mở rộng triển khai lên nền tảng Kubernetes (K8s/K3s) để hỗ trợ tính năng tự động phục hồi (Self-healing) và tự động mở rộng quy mô tải (Horizontal Pod Autoscaling).
@@ -306,3 +337,4 @@ sum by (client_ip) (count_over_time({job="nginx"} [5m]))
 3. Prometheus & Grafana Integration Manual - https://prometheus.io/docs
 4. Grafana Loki LogQL Query Language Reference - https://grafana.com/docs/loki/latest/logql
 5. CIS Docker Benchmark & Container Security Best Practices.
+

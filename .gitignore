@@ -17,3 +17,14 @@ app/src/logs/
 Thumbs.db
 .vscode/
 .idea/
+
+# LaTeX auxiliary build files
+*.aux
+*.lof
+*.lot
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+

@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BÁO CÁO BÀI TẬP LỚN - HỆ THỐNG QUẢN LÝ KHO HÀNG (ICTU)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-serif: 'Times New Roman', 'Tinos', Times, 'Liberation Serif', serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+            --page-width: 210mm;
+            --page-height: 297mm;
+            --text-color: #111827;
+            --heading-color: #000000;
+            --line-color: #4b5563;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        body {
+            font-family: var(--font-serif);
+            font-size: 12.5pt;
+            line-height: 1.45;
+            color: var(--text-color);
+            background-color: #cbd5e1;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Top control bar */
+        .toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 9999;
+            background: #1e293b;
+            color: #ffffff;
+            padding: 9px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+            font-family: var(--font-sans);
+            font-size: 13px;
+        }
+
+        .toolbar-title {
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #f8fafc;
+        }
+
+        .toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-btn {
+            background: #334155;
+            color: #ffffff;
+            border: 1px solid #475569;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-family: var(--font-sans);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .toolbar-btn:hover {
+            background: #475569;
+        }
+
+        .toolbar-btn.active {
+            background: #2563eb;
+            border-color: #3b82f6;
+        }
+
+        .toolbar-btn.btn-print {
+            background: #059669;
+            border-color: #10b981;
+        }
+
+        .toolbar-btn.btn-print:hover {
+            background: #047857;
+        }
+
+        .zoom-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #cbd5e1;
+        }
+
+        .zoom-slider {
+            cursor: pointer;
+            accent-color: #3b82f6;
+            width: 90px;
+        }
+
+        /* Document Container */
+        .document-wrapper {
+            padding: 24px 12px;
+            display: flex;
+            justify-content: center;
+            transition: transform 0.2s ease;
+            transform-origin: top center;
+        }
+
+        .pages-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        /* 2-Column Grid Mode (Matching the 4-up photo layout) */
+        .pages-container.grid-layout {
+            display: grid;
+            grid-template-columns: repeat(2, var(--page-width));
+            gap: 20px;
+            justify-content: center;
+        }
+
+        /* A4 Page Specification */
+        .page {
+            width: var(--page-width);
+            min-height: var(--page-height);
+            height: var(--page-height);
+            background: #ffffff;
+            padding: 18mm 20mm 18mm 25mm; /* Standard thesis margins */
+            position: relative;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            border: 1px solid #94a3b8;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        /* Crop marks in 4 corners of each page */
+        .crop-mark {
+            position: absolute;
+            width: 14mm;
+            height: 14mm;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .crop-mark.top-left {
+            top: 10mm;
+            left: 12mm;
+            border-top: 1.5px solid var(--line-color);
+            border-left: 1.5px solid var(--line-color);
+        }
+
+        .crop-mark.top-right {
+            top: 10mm;
+            right: 12mm;
+            border-top: 1.5px solid var(--line-color);
+            border-right: 1.5px solid var(--line-color);
+        }
+
+        .crop-mark.bottom-left {
+            bottom: 10mm;
+            left: 12mm;
+            border-bottom: 1.5px solid var(--line-color);
+            border-left: 1.5px solid var(--line-color);
+        }
+
+        .crop-mark.bottom-right {
+            bottom: 10mm;
+            right: 12mm;
+            border-bottom: 1.5px solid var(--line-color);
+            border-right: 1.5px solid var(--line-color);
+        }
+
+        /* Page 1: Academic Cover Page Styling */
+        .cover-page {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 13mm 15mm 13mm 15mm;
+            position: relative;
+            background: #ffffff;
+        }
+
+        /* Double border frame for academic thesis */
+        .cover-border-outer {
+            position: absolute;
+            top: 10mm;
+            left: 12mm;
+            right: 12mm;
+            bottom: 10mm;
+            border: 2.5px solid #0f172a;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .cover-border-inner {
+            position: absolute;
+            top: 12.5mm;
+            left: 14.5mm;
+            right: 14.5mm;
+            bottom: 12.5mm;
+            border: 1px solid #334155;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .cover-corner-accent {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            pointer-events: none;
+            z-index: 11;
+        }
+
+        .cover-corner-accent.tl {
+            top: 14mm;
+            left: 16mm;
+            border-top: 2px solid #0f172a;
+            border-left: 2px solid #0f172a;
+        }
+
+        .cover-corner-accent.tr {
+            top: 14mm;
+            right: 16mm;
+            border-top: 2px solid #0f172a;
+            border-right: 2px solid #0f172a;
+        }
+
+        .cover-corner-accent.bl {
+            bottom: 14mm;
+            left: 16mm;
+            border-bottom: 2px solid #0f172a;
+            border-left: 2px solid #0f172a;
+        }
+
+        .cover-corner-accent.br {
+            bottom: 14mm;
+            right: 16mm;
+            border-bottom: 2px solid #0f172a;
+            border-right: 2px solid #0f172a;
+        }
+
+        .cover-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 20;
+            padding: 3mm 5mm;
+        }
+
+        .cover-header {
+            width: 100%;
+            text-align: center;
+        }
+
+        .cover-header .inst-top {
+            font-size: 13pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #0f172a;
+            margin-bottom: 3px;
+        }
+
+        .cover-header .inst-main {
+            font-size: 13.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+            color: #000000;
+            margin-bottom: 3px;
+        }
+
+        .cover-header .inst-faculty {
+            font-size: 12.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #1e293b;
+        }
+
+        .cover-header-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 6px auto 0 auto;
+            width: 55%;
+        }
+
+        .cover-header-divider .line {
+            flex: 1;
+            height: 1px;
+            background: #475569;
+        }
+
+        .cover-header-divider .star {
+            font-size: 9pt;
+            color: #334155;
+            letter-spacing: 2px;
+        }
+
+        .cover-logo-wrapper {
+            margin: 8px 0;
+        }
+
+        .cover-logo-wrapper img {
+            width: 152px;
+            height: 152px;
+            object-fit: contain;
+            display: inline-block;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.06));
+        }
+
+        .cover-title-area {
+            width: 100%;
+            text-align: center;
+        }
+
+        .cover-report-tag {
+            font-size: 16pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .cover-course-tag {
+            font-size: 12.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .cover-main-title {
+            font-size: 16pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            line-height: 1.35;
+            color: #000000;
+            max-width: 95%;
+            margin: 0 auto 10px auto;
+        }
+
+        .cover-sub-meta {
+            margin-bottom: 12px;
+        }
+
+        .cover-sub-meta .topic-num {
+            font-size: 12.5pt;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 3px;
+        }
+
+        .cover-sub-meta .major-name {
+            font-size: 12pt;
+            font-style: italic;
+            color: #334155;
+        }
+
+        .cover-meta-box {
+            width: 100%;
+            margin-top: 6px;
+        }
+
+        .cover-meta-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1.5px solid #334155;
+            text-align: left;
+            background: #ffffff;
+        }
+
+        .cover-meta-table td {
+            width: 50%;
+            padding: 9px 14px;
+            vertical-align: top;
+            border: 1px solid #475569;
+            font-size: 11pt;
+            line-height: 1.45;
+        }
+
+        .cover-meta-table .field-label {
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #0f172a;
+            margin-bottom: 5px;
+            font-size: 10.5pt;
+            border-bottom: 1px dashed #cbd5e1;
+            padding-bottom: 3px;
+        }
+
+        .cover-meta-table .field-row {
+            margin-bottom: 3px;
+            color: #1e293b;
+        }
+
+        .cover-meta-table .field-row .lbl {
+            color: #475569;
+            display: inline-block;
+            min-width: 75px;
+        }
+
+        .cover-location-year {
+            font-size: 12.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #0f172a;
+            margin-top: 10px;
+        }
+
+        /* Test matrix table styling */
+        .test-matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8.5pt;
+            line-height: 1.25;
+            margin: 6px 0;
+        }
+
+        .test-matrix-table th {
+            background: #1e293b;
+            color: #ffffff;
+            font-weight: 700;
+            padding: 5px 6px;
+            border: 1px solid #334155;
+            text-align: center;
+            font-family: var(--font-sans);
+            font-size: 8.5pt;
+        }
+
+        .test-matrix-table td {
+            padding: 3.5px 5px;
+            border: 1px solid #94a3b8;
+            vertical-align: middle;
+            color: #0f172a;
+        }
+
+        .test-matrix-table tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .badge-pass {
+            display: inline-block;
+            background: #15803d;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 7.5pt;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: var(--font-sans);
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        .test-summary-box {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 9.5pt;
+            color: #166534;
+            margin-top: 6px;
+            line-height: 1.35;
+        }
+
+        /* Standard Typography */
+        p {
+            text-align: justify;
+            text-justify: inter-word;
+            margin-bottom: 8px;
+            font-size: 12.5pt;
+            line-height: 1.42;
+        }
+
+        .indented-p {
+            text-indent: 1.2cm;
+            margin-bottom: 7px;
+        }
+
+        h2.title-center {
+            font-size: 14pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: center;
+            margin-bottom: 12px;
+            color: #000000;
+        }
+
+        h2.chapter-header {
+            font-size: 13pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: left;
+            margin-top: 12px;
+            margin-bottom: 6px;
+            color: #000000;
+        }
+
+        h3.section-header {
+            font-size: 12.5pt;
+            font-weight: 700;
+            text-align: left;
+            margin-top: 8px;
+            margin-bottom: 5px;
+            color: #000000;
+        }
+
+        h4.subsection-header {
+            font-size: 12pt;
+            font-weight: 700;
+            margin-top: 7px;
+            margin-bottom: 3px;
+            color: #111827;
+        }
+
+        ul, ol {
+            padding-left: 28px;
+            margin-bottom: 6px;
+        }
+
+        li {
+            text-align: justify;
+            margin-bottom: 3px;
+            font-size: 12.5pt;
+            line-height: 1.38;
+        }
+
+        hr.divider-line {
+            border: none;
+            border-top: 1px solid #4b5563;
+            margin: 12px 0;
+        }
+
+        /* Numbered TOC */
+        .toc-numbered {
+            list-style: decimal;
+            padding-left: 24px;
+            margin-bottom: 10px;
+        }
+
+        .toc-numbered li {
+            font-size: 11.5pt;
+            line-height: 1.32;
+            margin-bottom: 3px;
+        }
+
+        /* Tree structure box (Green styled on white as in image) */
+        .tree-container {
+            font-family: var(--font-mono);
+            font-size: 7.8pt;
+            line-height: 1.12;
+            background: #ffffff;
+            padding: 2px 4px;
+            margin: 2px 0 4px 0;
+            color: #15803d; /* Green tree text */
+            white-space: pre;
+            overflow: hidden;
+        }
+
+        #page-4 {
+            padding-top: 15mm;
+            padding-bottom: 15mm;
+        }
+        #page-4 p, #page-4 li {
+            margin-bottom: 3px;
+        }
+        #page-4 h3.section-header {
+            margin-top: 5px;
+            margin-bottom: 3px;
+        }
+
+        .tree-container .tree-comment {
+            color: #64748b;
+            font-style: italic;
+        }
+
+        /* Code block styling */
+        pre.code-box {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 9.5pt;
+            line-height: 1.3;
+            margin: 6px 0;
+            overflow-x: auto;
+            color: #0f172a;
+        }
+
+        code {
+            font-family: var(--font-mono);
+            font-size: 10.5pt;
+            color: #0f766e;
+            background: #f1f5f9;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+
+        /* Figures & Screenshots */
+        figure.report-figure {
+            margin: 6px 0;
+            text-align: center;
+        }
+
+        figure.report-figure img {
+            max-width: 96%;
+            max-height: 125mm;
+            height: auto;
+            border: 1px solid #94a3b8;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-radius: 4px;
+        }
+
+        figcaption.report-caption {
+            font-size: 10.5pt;
+            font-style: italic;
+            color: #334155;
+            margin-top: 3px;
+            text-align: center;
+        }
+
+        /* Page footer / page number */
+        .page-footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 9.5pt;
+            color: #64748b;
+            border-top: 0.5px solid #cbd5e1;
+            padding-top: 3px;
+        }
+
+        /* Print Optimization */
+        @media print {
+            body {
+                background: #ffffff !important;
+                padding: 0 !important;
+            }
+            .toolbar {
+                display: none !important;
+            }
+            .document-wrapper {
+                padding: 0 !important;
+                transform: none !important;
+            }
+            .pages-container {
+                display: block !important;
+                gap: 0 !important;
+            }
+            .page {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                width: 210mm !important;
+                height: 297mm !important;
+            }
+            .crop-mark {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Navigation and View Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-title">
+            <span>📑 BÁO CÁO BÀI TẬP LỚN - ĐỀ TÀI QUẢN LÝ KHO HÀNG (ICTU)</span>
+        </div>
+        <div class="toolbar-actions">
+            <button class="toolbar-btn active" id="btnGrid" onclick="setLayout('grid')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                Xem 2 Cột (Y như ảnh)
+            </button>
+            <button class="toolbar-btn" id="btnSingle" onclick="setLayout('single')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                Xem 1 Cột dọc
+            </button>
+            <div class="zoom-control">
+                <span>🔍 Zoom:</span>
+                <input type="range" class="zoom-slider" id="zoomRange" min="50" max="120" value="85" oninput="changeZoom(this.value)">
+                <span id="zoomVal">85%</span>
+            </div>
+            <button class="toolbar-btn btn-print" onclick="window.print()">
+                🖨️ In Báo Cáo / Xuất PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Document Viewer -->
+    <div class="document-wrapper" id="docWrapper">
+        <div class="pages-container grid-layout" id="pagesContainer">
+
+            <!-- ================= PAGE 1: TRANG BÌA ================= -->
+            <div class="page cover-page" id="page-1">
+                <!-- Academic Double Border & Corner Ornaments -->
+                <div class="cover-border-outer"></div>
+                <div class="cover-border-inner"></div>
+                <div class="cover-corner-accent tl"></div>
+                <div class="cover-corner-accent tr"></div>
+                <div class="cover-corner-accent bl"></div>
+                <div class="cover-corner-accent br"></div>
+
+                <div class="cover-container">
+                    <div class="cover-header">
+                        <div class="inst-top">ĐẠI HỌC THÁI NGUYÊN</div>
+                        <div class="inst-main">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN VÀ TRUYỀN THÔNG</div>
+                        <div class="inst-faculty">KHOA CÔNG NGHỆ THÔNG TIN</div>
+                        <div class="cover-header-divider">
+                            <span class="line"></span>
+                            <span class="star">★ ★ ★</span>
+                            <span class="line"></span>
+                        </div>
+                    </div>
+
+                    <div class="cover-logo-wrapper">
+                        <img src="docs/images/ictu_logo.png" alt="Logo Trường Đại học Công nghệ Thông tin và Truyền thông - ICTU">
+                    </div>
+
+                    <div class="cover-title-area">
+                        <div class="cover-report-tag">BÁO CÁO BÀI TẬP LỚN</div>
+                        <div class="cover-course-tag">HỌC PHẦN: TRIỂN KHAI &amp; QUẢN TRỊ HỆ THỐNG / DEVOPS</div>
+                        <h1 class="cover-main-title">XÂY DỰNG VÀ TRIỂN KHAI HỆ THỐNG QUẢN LÝ KHO HÀNG (INVENTORY MANAGEMENT SYSTEM)</h1>
+                        <div class="cover-sub-meta">
+                            <div class="topic-num">ĐỀ TÀI: ĐỀ SỐ 05</div>
+                            <div class="major-name">Ngành: Công nghệ thông tin</div>
+                        </div>
+                    </div>
+
+                    <div class="cover-meta-box">
+                        <table class="cover-meta-table">
+                            <tr>
+                                <td>
+                                    <div class="field-label">SINH VIÊN THỰC HIỆN:</div>
+                                    <div class="field-row"><span class="lbl">Họ và tên:</span> <strong>Thân Phú Cường</strong></div>
+                                    <div class="field-row"><span class="lbl">MSSV:</span> <strong>DTC245200356</strong></div>
+                                    <div class="field-row"><span class="lbl">Lớp:</span> <strong>CNTTK23L</strong></div>
+                                </td>
+                                <td>
+                                    <div class="field-label">GIẢNG VIÊN HƯỚNG DẪN:</div>
+                                    <div class="field-row"><span class="lbl">Giảng viên:</span> <strong>TS. Vũ Văn Diện</strong></div>
+                                    <div class="field-row"><span class="lbl">Môn:</span> TRIỂN KHAI &amp; QUẢN TRỊ HỆ THỐNG</div>
+                                    <div class="field-row"><span class="lbl">Khoa:</span> Công nghệ thông tin</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="cover-location-year">
+                        THÁI NGUYÊN, NĂM 2026
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 2: LỜI CẢM ƠN, MỤC LỤC, CHƯƠNG 1 (PHẦN ĐẦU) ================= -->
+            <div class="page" id="page-2">
+                <div class="crop-mark top-left"></div>
+                <div class="crop-mark top-right"></div>
+                <div class="crop-mark bottom-left"></div>
+                <div class="crop-mark bottom-right"></div>
+
+                <h2 class="title-center">LỜI CẢM ƠN</h2>
+                <p class="indented-p">Nhóm chúng em xin gửi lời cảm ơn chân thành đến thầy Vũ Văn Diện, giảng viên môn học, đã tận tình giảng dạy và hướng dẫn chúng em trong quá trình thực hiện đề tài "Hệ thống Quản lý Kho hàng (Inventory Management System)".</p>
+                <p class="indented-p">Kiến thức từ môn học của thầy đã giúp chúng em biết cách áp dụng kiến thức vào thực tế phát triển phần mềm và quản lý hệ thống. Dù đã cố gắng hoàn thiện, báo cáo khó tránh khỏi những thiếu sót, em rất mong nhận được nhận xét và góp ý từ thầy.</p>
+                <p class="indented-p">Kính chúc thầy luôn mạnh khỏe và gặt hái nhiều thành công!</p>
+
+                <div style="height: 10px;"></div>
+
+                <h2 class="chapter-header" style="font-size: 12pt;">MỤC LỤC &amp; DANH MỤC TÓM TẮT</h2>
+                <ol class="toc-numbered">
+                    <li>Chương 1: Mở đầu &amp; Tổng quan Hệ thống</li>
+                    <li>Chương 2: Cấu trúc Mã nguồn &amp; Quản lý trên GitHub</li>
+                    <li>Chương 3: Triển khai Website Quản lý Kho hàng &amp; Cơ sở dữ liệu MySQL</li>
+                    <li>Chương 4: Cấu hình Nginx Reverse Proxy, Security Headers &amp; SSL (Commit 1)</li>
+                    <li>Chương 5: Giám sát Hệ thống với Prometheus &amp; Grafana (Commit 2)</li>
+                    <li>Chương 6: Quản lý Log Tập trung với Loki &amp; Promtail (Commit 3)</li>
+                    <li>Chương 7: Áp dụng các Biện pháp Gia cố Bảo mật (Hardening)</li>
+                    <li>Chương 8: Kiểm thử Hệ thống &amp; Đánh giá Thực nghiệm</li>
+                    <li>Chương 9: Kết luận &amp; Hướng phát triển</li>
+                </ol>
+
+                <div style="height: 4px;"></div>
+
+                <h2 class="chapter-header">CHƯƠNG 1: MỞ ĐẦU &amp; TỔNG QUAN HỆ THỐNG</h2>
+                <h3 class="section-header">1.1. Đặt vấn đề &amp; Mục tiêu Đề tài</h3>
+                <p class="indented-p">Trong bối cảnh chuyển đổi số và sự bùng nổ của các ứng dụng thương mại điện tử, dịch vụ chuỗi cung ứng, khối lượng giao dịch và quản lý kho hàng tại các doanh nghiệp gia tăng theo cấp số nhân. Với phương pháp quản lý thủ công truyền thống qua sổ sách hoặc các ứng dụng đơn lẻ thiếu tính liên kết, bộ phận vận hành kho thường xuyên đối mặt với nguy cơ sai lệch tồn kho, chậm trễ trong xử lý đơn hàng và thiếu khả năng theo dõi trạng thái hệ thống theo thời gian thực. Đồng thời, việc đảm bảo tính an toàn, sẵn sàng và bảo mật cho hạ tầng ứng dụng quản lý kho đóng vai trò sống còn đối với hoạt động kinh doanh liên tục của doanh nghiệp.</p>
+
+                <div class="page-footer">
+                    <span>Hệ thống Quản lý Kho hàng - Báo cáo Bài tập lớn</span>
+                    <span>Trang 2</span>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 3: TIẾP CHƯƠNG 1 & CHƯƠNG 2 (QUẢN LÝ MÃ NGUỒN) ================= -->
+            <div class="page" id="page-3">
+                <div class="crop-mark top-left"></div>
+                <div class="crop-mark top-right"></div>
+                <div class="crop-mark bottom-left"></div>
+                <div class="crop-mark bottom-right"></div>
+
+                <p>Mục tiêu của đồ án này không chỉ dừng lại ở việc phát triển ứng dụng Web Quản lý kho hàng mà còn hướng tới triển khai theo mô hình Chuẩn vận hành hệ thống hiện đại (DevOps/SRE):</p>
+                <ul>
+                    <li>Đóng gói ứng dụng dạng Containerization bằng Docker &amp; Docker Compose.</li>
+                    <li>Cấu hình Nginx Reverse Proxy đóng vai trò gateway, xử lý HTTPS và thiết lập Security Headers.</li>
+                    <li>Tích hợp bộ công cụ Giám sát chỉ số tài nguyên và dịch vụ (Prometheus + Grafana).</li>
+                    <li>Tích hợp giải pháp Quản lý Log tập trung (Loki + Promtail) hỗ trợ truy vấn LogQL.</li>
+                    <li>Áp dụng kỹ thuật Hardening hệ thống nhằm nâng cao tính an toàn và bảo mật.</li>
+                </ul>
+
+                <h3 class="section-header">1.2. Kiến trúc Tổng thể Hệ thống</h3>
+                <p>Hệ thống được thiết kế theo mô hình kiến trúc phân tầng dịch vụ chuẩn mực (Multi-tier Architecture), đảm bảo tính cô lập, khả năng mở rộng linh hoạt và an toàn dữ liệu:</p>
+                <ol>
+                    <li><strong>User / Client Layer:</strong> Người dùng truy cập thông qua Trình duyệt Web bảo mật (HTTP/HTTPS).</li>
+                    <li><strong>Reverse Proxy Layer:</strong> Nginx tiếp nhận các request, định tuyến tới Web App, phpMyAdmin, hoặc Grafana, đồng thời áp dụng mã hóa SSL/TLS và Security Headers.</li>
+                    <li><strong>Application &amp; Storage Layer:</strong>
+                        <ul style="margin-top: 3px;">
+                            <li><em>Web Application (PHP / Node.js):</em> Xử lý nghiệp vụ quản lý kho (Nhập/Xuất, Tồn kho, Nhà cung cấp).</li>
+                            <li><em>Database (MySQL 8.0):</em> Lưu trữ dữ liệu hệ thống kho hàng.</li>
+                            <li><em>phpMyAdmin:</em> Công cụ quản trị CSDL trực quan.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Monitoring &amp; Logging Layer:</strong>
+                        <ul style="margin-top: 3px;">
+                            <li><em>Prometheus:</em> Thu thập metrics định kỳ từ các Exporters (Node Exporter, cAdvisor, MySQL Exporter).</li>
+                            <li><em>Grafana:</em> Trực quan hóa metrics và logs thành các Dashboard theo dõi thời gian thực.</li>
+                            <li><em>Promtail:</em> Thu thập log file từ Nginx, App và MySQL, gửi về Loki.</li>
+                            <li><em>Loki:</em> Lưu trữ index log và phục vụ truy vấn LogQL.</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <hr class="divider-line" />
+
+                <h2 class="chapter-header">CHƯƠNG 2: CẤU TRÚC MÃ NGUỒN &amp; QUẢN LÝ TRÊN GITHUB (YÊU CẦU 1)</h2>
+                <h3 class="section-header">2.1. Quy chuẩn Quản lý Mã nguồn</h3>
+                <p class="indented-p">Toàn bộ mã nguồn ứng dụng Web Quản lý kho, các tệp cấu hình hạ tầng Docker Compose, Nginx, Prometheus, Loki, Promtail và tài liệu kiểm thử được quản lý tập trung trên GitHub tuân thủ quy trình Git Workflow chuyên nghiệp:</p>
+
+                <div class="page-footer">
+                    <span>Hệ thống Quản lý Kho hàng - Báo cáo Bài tập lớn</span>
+                    <span>Trang 3</span>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 4: CẤU TRÚC THƯ MỤC & README ================= -->
+            <div class="page" id="page-4">
+                <div class="crop-mark top-left"></div>
+                <div class="crop-mark top-right"></div>
+                <div class="crop-mark bottom-left"></div>
+                <div class="crop-mark bottom-right"></div>
+
+                <ul style="margin-top: 0;">
+                    <li><strong>Tài khoản GitHub &amp; Repository:</strong> Repository được khởi tạo với tên theo chuẩn Mã số Sinh viên (ví dụ: <a href="https://github.com/cuongcoder123/DTC245200356-QLKH" style="color: #0d9488; text-decoration: underline;">cuongcoder123/DTC245200356-QLKH</a>).</li>
+                    <li><strong>Quy trình Git Commit:</strong> Mỗi giai đoạn triển khai tương ứng với các commit rõ ràng, ghi chú chi tiết công việc hoàn thành và tuần tự theo yêu cầu đề bài.</li>
+                </ul>
+
+                <h3 class="section-header">2.2. Cấu trúc Thư mục Dự án</h3>
+                <div class="tree-container">📁 /DTC245200356-QLKH
+├── docker-compose.yml
+├── .env.example
+├── README.md
+├── nginx/
+│   ├── nginx.conf
+│   ├── conf.d/
+│   │   └── default.conf
+│   └── ssl/
+│       ├── server.crt
+│       └── server.key
+├── app/
+│   ├── src/ (Mã nguồn Website Quản lý kho: PHP / Node.js)
+│   └── Dockerfile
+├── prometheus/
+│   └── prometheus.yml
+├── promtail/
+│   └── promtail-config.yml
+├── loki/
+│   └── loki-config.yml
+└── grafana/
+    └── provisioning/
+        ├── datasources/
+        └── dashboards/</div>
+
+                <h3 class="section-header"><span style="color: #16a34a; font-weight: bold;">=</span> 2.3. Nội dung README.md</h3>
+                <p>File <code style="color: #16a34a;">README.md</code> trình bày tổng quan dự án, sơ đồ kiến trúc, yêu cầu tiền đề (Docker, Docker Compose) và các lệnh chạy hệ thống:</p>
+                <ul>
+                    <li>Chạy lệnh <code style="color: #16a34a;">docker-compose up -d --build</code> để khởi chạy toàn bộ các dịch vụ hệ thống.</li>
+                    <li>Kiểm tra trạng thái các container với <code style="color: #16a34a;">docker-compose ps</code>.</li>
+                </ul>
+
+                <div class="page-footer">
+                    <span>Hệ thống Quản lý Kho hàng - Báo cáo Bài tập lớn</span>
+                    <span>Trang 4</span>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 5: CHƯƠNG 3: TRIỂN KHAI WEBSITE & CƠ SỞ DỮ LIỆU MYSQL ================= -->
+            <div class="page" id="page-5">
+                <div class="crop-mark top-left"></div>
+                <div class="crop-mark top-right"></div>
+                <div class="crop-mark bottom-left"></div>
+                <div class="crop-mark bottom-right"></div>
+
+                <h2 class="chapter-header">CHƯƠNG 3: TRIỂN KHAI WEBSITE QUẢN LÝ KHO HÀNG &amp; CƠ SỞ DỮ LIỆU MYSQL (YÊU CẦU 2)</h2>
+                <h3 class="section-header">3.1. Thiết kế Cơ sở Dữ liệu MySQL 8.0</h3>
+                <p>Cơ sở dữ liệu <code>inventory_db</code> gồm 6 bảng chuẩn hóa quan hệ:</p>
+                <ol>
+                    <li><code>users</code>: Quản lý tài khoản, mã hóa mật khẩu BCRYPT, phân quyền <code>admin</code> và <code>staff</code>.</li>
+                    <li><code>categories</code>: Danh mục phân loại sản phẩm trong kho hàng.</li>
+                    <li><code>suppliers</code>: Thông tin đối tác, số điện thoại, email, địa chỉ giao dịch.</li>
+                    <li><code>products</code>: Thông tin sản phẩm, mã SKU, đơn vị tính, giá nhập, giá bán, số lượng tồn, ngưỡng <code>min_stock</code>.</li>
+                    <li><code>inventory_transactions</code>: Ghi nhận lịch sử Nhập kho (<code>IMPORT</code>) và Xuất kho (<code>EXPORT</code>).</li>
+                    <li><code>system_logs</code>: Lưu vết nhật ký hoạt động hệ thống nội bộ.</li>
+                </ol>
+
+                <h3 class="section-header">3.2. Chức năng Nghiệp vụ &amp; Giao diện Website Quản lý Kho</h3>
+                <h4 class="subsection-header">3.2.1. Giao diện Đăng nhập Hệ thống (Authentication &amp; RBAC)</h4>
+                <p>Xác thực an toàn với thuật toán băm mật khẩu <code>BCRYPT</code>, bảo vệ phiên làm việc qua Cookie bảo mật (<code>HttpOnly</code>, <code>SameSite=Lax</code>). Phân quyền người dùng chặt chẽ giữa Quản trị viên (<code>admin</code>) và Thủ kho (<code>staff</code>).</p>
+
+                <figure class="report-figure">
+                    <img src="docs/images/01_dang_nhap.png" alt="Giao diện Đăng nhập An toàn Hệ thống">
+                    <figcaption class="report-caption">Hình 3.1: Giao diện Đăng nhập An toàn Hệ thống</figcaption>
+                </figure>
+
+                <div class="page-footer">
+                    <span>Hệ thống Quản lý Kho hàng - Báo cáo Bài tập lớn</span>
+                    <span>Trang 5</span>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 6: DASHBOARD & QUẢN LÝ HÀNG HÓA ================= -->
+            <div class="page" id="page-6">
+                <div class="crop-mark top-left"></div>
+                <div class="crop-mark top-right"></div>
+                <div class="crop-mark bottom-left"></div>
+                <div class="crop-mark bottom-right"></div>
+
+                <h4 class="subsection-header">3.2.2. Bảng Điều khiển Tổng quan (Dashboard Quản lý Kho)</h4>
+                <p>Cung cấp 4 thẻ KPI động (Tổng SKU: 13, Cảnh báo tồn thấp: 3, Tổng giá trị tồn kho: 823.850.000 VNĐ, Giao dịch tháng), biểu đồ xu hướng Nhập/Xuất 6 tháng, biểu đồ cơ cấu phân bổ vốn tồn kho và bảng cảnh báo hàng sắp hết.</p>
+
+                <figure class="report-figure">
+                    <img src="docs/images/02_tong_quan_dashboard.png" alt="Bảng Điều khiển Tổng quan Dashboard">
+                    <figcaption class="report-caption">Hình 3.2: Bảng Điều khiển Tổng quan Dashboard</figcaption>
+                </figure>
+
+                <h4 class="subsection-header">3.2.3. Phân hệ Quản lý Hàng hóa (Products Management)</h4>
+                <p>Danh mục toàn bộ SKU sản phẩm: mã hàng, nhóm ngành, đơn vị tính, đơn giá nhập/bán, số lượng tồn kho và ngưỡng báo động <code>min_stock</code> với badge trạng thái trực quan (Còn hàng / Sắp hết), tích hợp bộ lọc và xuất file CSV.</p>
+
+                <figure class="report-figure">
+                    <img src="docs/images/03_quan_ly_hang_hoa.png" alt="Giao diện Quản lý Danh mục Hàng hóa">
+                    <figcaption class="report-caption">Hình 3.3: Giao diện Quản lý Danh mục Hàng hóa</figcaption>
+                </figure>
+
+                <div class="page-footer">
+                    <span>Hệ thống Quản lý Kho hàng - Báo cáo Bài tập lớn</span>
+                    <span>Trang 6</span>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 7: NHÓM SẢN PHẨM & NHÀ CUNG CẤP ================= -->
+            <div class="page" id="page-7">
+                <div class="crop-mark top-left"></div>
+                <div class="crop-mark top-right"></div>
+                <div class="crop-mark bottom-left"></div>
+                <div class="crop-mark bottom-right"></div>
+
+                <h4 class="subsection-header">3.2.4. Phân hệ Quản lý Nhóm Sản phẩm (Categories)</h4>
+                <p>Phân loại 5 nhóm hàng hóa công nghệ chủ lực. Tự động thống kê số lượng mặt hàng, tổng đơn vị tồn và định giá tổng tài sản cho từng nhóm danh mục.</p>
+
+                <figure class="report-figure">
+                    <img src="docs/images/04_danh_muc_san_pham.png" alt="Giao diện Quản lý Danh mục Sản phẩm">
+                    <figcaption class="report-caption">Hình 3.4: Giao diện Quản lý Danh mục Sản phẩm</figcaption>
+                </figure>
+
+                <h4 class="subsection-header">3.2.5. Phân hệ Quản lý Nhà Cung cấp (Suppliers)</h4>
+                <p>Quản lý danh bạ đối tác cung ứng công nghệ hàng đầu (Sao Mai Tech, FPT Synnex, Cisco Systems Việt Nam, Digiworld, Viễn Đông) với hotline, email và địa chỉ giao dịch.</p>
+
+                <figure class="report-figure">
+                    <img src="docs/images/05_nha_cung_cap.png" alt="Giao diện Quản lý Nhà Cung Cấp Đối Tác">
+                    <figcaption class="report-caption">Hình 3.5: Giao diện Quản lý Nhà Cung Cấp Đối Tác</figcaption>
+                </figure>
+
+                <div class="page-footer">
+                    <span>Hệ thống Quản lý Kho hàng - Báo cáo Bài tập lớn</span>
+                    <span>Trang 7</span>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 8: GIAO DỊCH NHẬP XUẤT & BÁO CÁO THỐNG KÊ ================= -->
+            <div class="page" id="page-8">
+                <div class="crop-mark top-left"></div>
+                <div class="crop-mark top-right"></div>
+                <div class="crop-mark bottom-left"></div>
+                <div class="crop-mark bottom-right"></div>
+
+                <h4 class="subsection-header">3.2.6. Phân hệ Giao dịch Nhập / Xuất Kho (Inventory Transactions)</h4>
+                <p>Quản lý toàn diện lịch sử các phiếu Nhập (<code>NK-YYYYMMDD-XXXX</code>) và Xuất (<code>XK-YYYYMMDD-XXXX</code>), tự động cập nhật số lượng tồn kho theo giao dịch ACID của MySQL, kiểm soát số dư tồn kho an toàn và hỗ trợ in phiếu kho chuẩn hóa.</p>
+
+                <figure class="report-figure">
+                    <img src="docs/images/06_giao_dich_nhap_xuat.png" alt="Giao diện Quản lý Giao dịch Nhập / Xuất Kho">
+                    <figcaption class="report-caption">Hình 3.6: Giao diện Quản lý Giao dịch Nhập / Xuất Kho</figcaption>
+                </figure>
+
+                <h4 class="subsection-header">3.2.7. Phân hệ Báo cáo &amp; Thống kê Tài sản Kho (Reports)</h4>
+                <p>Báo cáo tài chính kho chuyên sâu: Thẩm định vốn tồn kho thực tế (<strong>823.850.000 VNĐ</strong>), Doanh thu kỳ vọng (<strong>973.450.000 VNĐ</strong>), bảng giá vốn và doanh thu từng mã hàng, xuất file CSV và in ấn báo cáo.</p>
+
+                <figure class="report-figure">
+                    <img src="docs/images/07_bao_cao_thong_ke.png" alt="Báo cáo Thẩm định & Luân chuyển Tồn kho">
+                    <figcaption class="report-caption">Hình 3.7: Báo cáo Thẩm định & Luân chuyển Tồn kho</figcaption>
+                </figure>
+
+                <div class="page-footer">
+                    <span>Hệ thống Quản lý Kho hàng - Báo cáo Bài tập lớn</span>
+                    <span>Trang 8</span>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 9: SANDBOX LOGQL & CHƯƠNG 4 (NGINX & SSL) ================= -->
+            <div class="page" id="page-9">
+                <div class="crop-mark top-left"></div>
+                <div class="crop-mark top-right"></div>
+                <div class="crop-mark bottom-left"></div>
+                <div class="crop-mark bottom-right"></div>
+
+                <h4 class="subsection-header">3.2.8. Trung tâm Điều hành Giám sát &amp; Sandbox Thử nghiệm LogQL</h4>
+                <p>Cung cấp sơ đồ kiến trúc 4 tầng, danh sách 3 câu truy vấn LogQL mẫu, công cụ sinh log giả lập (Log Generator) tạo log 404, 500, lỗi xuất kho để kiểm thử luồng đẩy log từ Promtail sang Loki thời gian thực.</p>
+
+                <figure class="report-figure">
+                    <img src="docs/images/08_trung_tam_giam_sat_logql.png" alt="Trung tâm Giám sát Hạ tầng DevOps & Sandbox LogQL">
+                    <figcaption class="report-caption">Hình 3.8: Trung tâm Giám sát Hạ tầng DevOps & Sandbox LogQL</figcaption>
+                </figure>
+
+                <hr class="divider-line" />
+
+                <h2 class="chapter-header">CHƯƠNG 4: CẤU HÌNH NGINX REVERSE PROXY, SECURITY HEADERS &amp; SSL (COMMIT 1)</h2>
+                <h3 class="section-header">4.1. Vai trò của Nginx Reverse Proxy</h3>
+                <p>Nginx tiếp nhận kết nối ngoài tại cổng 80/443, tự động chuyển hướng HTTP sang HTTPS bằng mã phản hồi <code>301 Moved Permanently</code>, quản lý tập trung chứng chỉ SSL/TLS và định tuyến: <code>/</code> vào Web App, <code>/pma/</code> vào phpMyAdmin, <code>/grafana/</code> vào Grafana.</p>
+
+                <h3 class="section-header">4.2. Tạo SSL Certificate Tự ký (Self-Signed SSL)</h3>
+                <pre class="code-box">openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout nginx/ssl/server.key -out nginx/ssl/server.crt \
+  -subj "/C=VN/ST=Hanoi/L=Hanoi/O=DTC245200356/CN=localhost"</pre>
+
+                <div class="page-footer">
+                    <span>Hệ thống Quản lý Kho hàng - Báo cáo Bài tập lớn</span>
+                    <span>Trang 9</span>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 10: PROMETHEUS & GRAFANA ================= -->
+            <div class="page" id="page-10">
+                <div class="crop-mark top-left"></div>
+                <div class="crop-mark top-right"></div>
+                <div class="crop-mark bottom-left"></div>
+                <div class="crop-mark bottom-right"></div>
+
+                <h3 class="section-header">4.3. Thiết lập Security Headers trong <code>default.conf</code></h3>
+                <p>Nginx được trang bị đầy đủ 5 tiêu chuẩn Security Headers: <code>X-Frame-Options "SAMEORIGIN"</code> (chống Clickjacking), <code>X-XSS-Protection "1; mode=block"</code> (chống XSS), <code>X-Content-Type-Options "nosniff"</code> (chống MIME-sniffing), <code>Referrer-Policy</code> và <code>Content-Security-Policy</code>.</p>
+
+                <hr class="divider-line" />
+
+                <h2 class="chapter-header">CHƯƠNG 5: GIÁM SÁT HỆ THỐNG VỚI PROMETHEUS &amp; GRAFANA (COMMIT 2)</h2>
+                <h3 class="section-header">5.1. Mô hình Kéo Chỉ số (Prometheus Pull Model)</h3>
+                <p>Prometheus được cấu hình chu kỳ kéo (<code>scrape_interval: 15s</code>) thu thập định kỳ từ các nguồn: tiến trình Prometheus (:9090), chỉ số phần cứng Host qua Node Exporter (:9100) và chỉ số CSDL MySQL qua MySQL Exporter (:9104).</p>
+
+                <h3 class="section-header">5.2. Dashboard Tự động Provisioning trên Grafana</h3>
+                <p>Grafana được nạp sẵn DataSource Prometheus và DataSource Loki mà không cần thao tác tay. Nạp sẵn Dashboard theo dõi MySQL Active Connections, tần suất truy vấn QPS, trạng thái Exporter (<code>up</code>) và hiển thị trực tiếp dòng log từ Loki.</p>
+
+                <figure class="report-figure">
+                    <img src="docs/images/09_grafana_dashboard.png" alt="Bảng Giám sát Hệ thống & Nhật ký Tập trung trên Grafana">
+                    <figcaption class="report-caption">Hình 5.1: Bảng Giám sát Hệ thống & Nhật ký Tập trung trên Grafana</figcaption>
+                </figure>
+
+                <div class="page-footer">
+                    <span>Hệ thống Quản lý Kho hàng - Báo cáo Bài tập lớn</span>
+                    <span>Trang 10</span>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 11: TARGETS, PHPMYADMIN & LOKI ================= -->
+            <div class="page" id="page-11">
+                <div class="crop-mark top-left"></div>
+                <div class="crop-mark top-right"></div>
+                <div class="crop-mark bottom-left"></div>
+                <div class="crop-mark bottom-right"></div>
+
+                <h4 class="subsection-header">5.3.2. Trạng thái Hoạt động Các Exporters trên Prometheus Targets</h4>
+                <p>Giao diện Scrape Targets xác nhận 100% các thành phần giám sát đều đạt trạng thái <strong>UP</strong> khỏe mạnh:</p>
+
+                <figure class="report-figure">
+                    <img src="docs/images/11_prometheus_targets.png" alt="Trạng thái Hoạt động Xanh (UP) của các Exporter">
+                    <figcaption class="report-caption">Hình 5.2: Trạng thái Hoạt động UP của các Exporter trên Prometheus</figcaption>
+                </figure>
+
+                <h4 class="subsection-header">5.3.3. Cổng Quản trị Cơ sở Dữ liệu phpMyAdmin qua Nginx Gateway</h4>
+                <figure class="report-figure">
+                    <img src="docs/images/10_phpmyadmin.png" alt="Giao diện Quản trị CSDL phpMyAdmin qua Nginx Gateway">
+                    <figcaption class="report-caption">Hình 5.3: Giao diện Quản trị CSDL phpMyAdmin qua Nginx Gateway</figcaption>
+                </figure>
+
+                <hr class="divider-line" />
+
+                <h2 class="chapter-header">CHƯƠNG 6: QUẢN LÝ LOG TẬP TRUNG VỚI LOKI &amp; PROMTAIL (COMMIT 3)</h2>
+                <h3 class="section-header">6.1. Nguyên lý Thu thập Log</h3>
+                <p>Promtail gắn kết đọc trực tiếp từ <code>/var/log/nginx/*.log</code> (access/error log) và <code>/var/log/app/*.log</code> (JSON structured log), gắn nhãn (<code>job="nginx"</code>, <code>job="app"</code>) và đẩy về Loki qua API <code>/loki/api/v1/push</code>.</p>
+
+                <div class="page-footer">
+                    <span>Hệ thống Quản lý Kho hàng - Báo cáo Bài tập lớn</span>
+                    <span>Trang 11</span>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 12: LOGQL QUERIES & HARDENING BẢO MẬT ================= -->
+            <div class="page" id="page-12">
+                <div class="crop-mark top-left"></div>
+                <div class="crop-mark top-right"></div>
+                <div class="crop-mark bottom-left"></div>
+                <div class="crop-mark bottom-right"></div>
+
+                <h3 class="section-header">6.2. Ba Câu Truy Vấn LogQL Chuyên Sâu</h3>
+                <p><strong>Query 1: Lọc mã lỗi HTTP 4xx hoặc 5xx từ Nginx:</strong></p>
+                <pre class="code-box">{job="nginx"} |= "status=" |~ "status=[45][0-9][0-9]"</pre>
+
+                <p><strong>Query 2: Thống kê tần suất request theo IP (Phát hiện tấn công DoS / Brute-force):</strong></p>
+                <pre class="code-box">sum by (client_ip) (count_over_time({job="nginx"} [5m]))</pre>
+
+                <p><strong>Query 3: Truy vết lỗi giao dịch kho hàng (Inventory Transactions):</strong></p>
+                <pre class="code-box">{job="app"} |= "inventory_transactions" |= "ERROR"</pre>
+
+                <hr class="divider-line" />
+
+                <h2 class="chapter-header">CHƯƠNG 7: ÁP DỤNG CÁC BIỆN PHÁP GIA CỐ BẢO MẬT (HARDENING) (YÊU CẦU 6)</h2>
+                <ol>
+                    <li><strong>Non-Root User Trong Container:</strong> Web App chạy với người dùng hạn chế <code>appuser</code> (UID 1001), ngăn chặn rủi ro thoát container (Container Breakout).</li>
+                    <li><strong>Phân Vùng Mạng (Network Isolation):</strong> Thiết lập 3 mạng Docker bridge độc lập (<code>frontend-net</code>, <code>backend-net</code>, <code>monitoring-net</code>). MySQL chỉ mở cổng nội bộ trong <code>backend-net</code>, không expose 3306 ra ngoài máy chủ Host.</li>
+                    <li><strong>Quản Lý Mật Khẩu &amp; Biến Môi Trường:</strong> Lưu trữ trong tệp <code>.env</code> riêng biệt, đưa vào <code>.gitignore</code>, cung cấp file mẫu <code>.env.example</code> phục vụ cộng tác an toàn.</li>
+                    <li><strong>Giới Hạn Tài Nguyên (Resource Limits):</strong> Thiết lập CPU và RAM limit trong <code>docker-compose.yml</code> cho từng container, phòng chống cạn kiệt tài nguyên máy chủ.</li>
+                </ol>
+
+                <div class="page-footer">
+                    <span>Hệ thống Quản lý Kho hàng - Báo cáo Bài tập lớn</span>
+                    <span>Trang 12</span>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 13: CHƯƠNG 8: KIỂM THỬ HỆ THỐNG & ĐÁNH GIÁ THỰC NGHIỆM ================= -->
+            <div class="page" id="page-13">
+                <div class="crop-mark top-left"></div>
+                <div class="crop-mark top-right"></div>
+                <div class="crop-mark bottom-left"></div>
+                <div class="crop-mark bottom-right"></div>
+
+                <h2 class="chapter-header">CHƯƠNG 8: KIỂM THỬ HỆ THỐNG &amp; ĐÁNH GIÁ THỰC NGHIỆM</h2>
+                <h3 class="section-header">8.1. Mục tiêu &amp; Phương pháp Kiểm thử</h3>
+                <p>Quá trình kiểm thử được triển khai đa tầng nhằm đánh giá thực nghiệm 4 trụ cột hệ thống: (1) Tính toàn vẹn nghiệp vụ kho và giao dịch ACID trên MySQL; (2) An toàn bảo mật cổng Nginx Gateway, mã hóa SSL/TLS và Security Headers; (3) Khả năng thu thập chỉ số Prometheus thời gian thực; (4) Khả năng gom log tập trung Promtail - Loki và độ chính xác của 3 câu truy vấn LogQL.</p>
+
+                <h3 class="section-header">8.2. Bảng Ma trận Kiểm thử Thực nghiệm (Test Cases Matrix)</h3>
+                <table class="test-matrix-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 8%;">Mã TC</th>
+                            <th style="width: 17%;">Hạng mục kiểm thử</th>
+                            <th style="width: 25%;">Kịch bản &amp; Điều kiện thực hiện</th>
+                            <th style="width: 24%;">Kết quả mong đợi</th>
+                            <th style="width: 18%;">Kết quả thực nghiệm</th>
+                            <th style="width: 8%;">Đánh giá</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="text-align: center; font-weight: 700;">TC-01</td>
+                            <td><strong>Xác thực &amp; RBAC</strong></td>
+                            <td>Đăng nhập hợp lệ admin/staff; thử đăng nhập sai mật khẩu.</td>
+                            <td>Cấp Cookie HttpOnly, SameSite=Lax; chặn brute-force sai mật khẩu.</td>
+                            <td>Chuyển hướng Dashboard an toàn; thông báo lỗi bảo mật.</td>
+                            <td style="text-align: center;"><span class="badge-pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: center; font-weight: 700;">TC-02</td>
+                            <td><strong>Nghiệp vụ Nhập kho</strong></td>
+                            <td>Tạo phiếu NK-xxxx (+15 chiếc CPU i7), xác nhận vào CSDL.</td>
+                            <td>Số lượng tồn tăng đúng 15 đơn vị; tự động lưu log giao dịch.</td>
+                            <td>Tồn kho cập nhật tức thì; mã phiếu tự động sinh chuẩn hóa.</td>
+                            <td style="text-align: center;"><span class="badge-pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: center; font-weight: 700;">TC-03</td>
+                            <td><strong>Nghiệp vụ Xuất kho</strong></td>
+                            <td>Tạo phiếu XK-xxxx với số lượng nhỏ hơn hoặc bằng tồn kho.</td>
+                            <td>Khấu trừ tồn kho chính xác; ghi nhận người lập và đối tác.</td>
+                            <td>Khấu trừ an toàn; hiển thị trên bảng đối soát lịch sử.</td>
+                            <td style="text-align: center;"><span class="badge-pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: center; font-weight: 700;">TC-04</td>
+                            <td><strong>Chặn Xuất vượt tồn</strong></td>
+                            <td>Tạo phiếu xuất số lượng lớn hơn tồn kho thực tế.</td>
+                            <td>Từ chối giao dịch, rollback DB; báo lỗi Insufficient stock.</td>
+                            <td>Hệ thống chặn thành công, ghi log ERROR {job="app"}.</td>
+                            <td style="text-align: center;"><span class="badge-pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: center; font-weight: 700;">TC-05</td>
+                            <td><strong>Cảnh báo Tồn thấp</strong></td>
+                            <td>Mặt hàng có số lượng tồn &le; ngưỡng an toàn min_stock.</td>
+                            <td>Tự động gắn badge vàng "Sắp hết", đưa lên thẻ KPI Dashboard.</td>
+                            <td>Phát hiện chính xác 3 sản phẩm dưới ngưỡng cảnh báo.</td>
+                            <td style="text-align: center;"><span class="badge-pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: center; font-weight: 700;">TC-06</td>
+                            <td><strong>Chuyển hướng HTTPS</strong></td>
+                            <td>Gửi yêu cầu HTTP không mã hóa tới cổng 80/8080.</td>
+                            <td>Nginx trả về mã 301 Moved Permanently chuyển sang HTTPS.</td>
+                            <td>Chuyển hướng 100% lưu lượng sang https://localhost/.</td>
+                            <td style="text-align: center;"><span class="badge-pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: center; font-weight: 700;">TC-07</td>
+                            <td><strong>HTTP Security Headers</strong></td>
+                            <td>Kiểm tra Headers trả về từ Nginx Gateway qua curl -I.</td>
+                            <td>Đủ 5 headers: X-Frame, XSS, CSP, Nosniff, Referrer.</td>
+                            <td>Phản hồi 5/5 tiêu chuẩn an ninh chống Clickjacking/XSS.</td>
+                            <td style="text-align: center;"><span class="badge-pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: center; font-weight: 700;">TC-08</td>
+                            <td><strong>Cô lập mạng MySQL</strong></td>
+                            <td>Quét kết nối cổng 3306 từ máy chủ Host ngoài Docker.</td>
+                            <td>Cổng 3306 bị từ chối; chỉ mở nội bộ trong backend-net.</td>
+                            <td>MySQL cô lập an toàn tuyệt đối, không lộ port ngoài.</td>
+                            <td style="text-align: center;"><span class="badge-pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: center; font-weight: 700;">TC-09</td>
+                            <td><strong>Prometheus Scrape</strong></td>
+                            <td>Kiểm tra Scrape Targets chu kỳ 15s tại /prometheus/targets.</td>
+                            <td>100% Exporter (mysql, node_exporter, prometheus) UP.</td>
+                            <td>3/3 Exporter hoạt động ổn định, thu thập chỉ số liên tục.</td>
+                            <td style="text-align: center;"><span class="badge-pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: center; font-weight: 700;">TC-10</td>
+                            <td><strong>Loki &amp; 3 Truy vấn LogQL</strong></td>
+                            <td>Sinh log lỗi giả lập (404, 500, lỗi xuất kho) và chạy LogQL.</td>
+                            <td>Promtail gom log tức thời; Loki lọc chính xác 3 câu query.</td>
+                            <td>Khớp 100% bản ghi lỗi HTTP và lỗi giao dịch kho hàng.</td>
+                            <td style="text-align: center;"><span class="badge-pass">PASS</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="test-summary-box">
+                    <strong>Kết luận Đánh giá Thực nghiệm:</strong> Toàn bộ <strong>10/10 ca kiểm thử (100%)</strong> đều đạt kết quả <strong>PASS</strong>. Hệ thống chứng minh khả năng vận hành ổn định, dữ liệu kho nhất quán theo chuẩn giao dịch ACID, hạ tầng mạng phân tầng bảo mật chặt chẽ và khả năng giám sát, truy vết lỗi (Observability) đạt độ tin cậy cao.
+                </div>
+
+                <div class="page-footer">
+                    <span>Hệ thống Quản lý Kho hàng - Báo cáo Bài tập lớn</span>
+                    <span>Trang 13</span>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 14: KẾT LUẬN, HƯỚNG PHÁT TRIỂN & TÀI LIỆU THAM KHẢO ================= -->
+            <div class="page" id="page-14">
+                <div class="crop-mark top-left"></div>
+                <div class="crop-mark top-right"></div>
+                <div class="crop-mark bottom-left"></div>
+                <div class="crop-mark bottom-right"></div>
+
+                <h2 class="chapter-header">CHƯƠNG 9: KẾT LUẬN &amp; HƯỚNG PHÁT TRIỂN</h2>
+                <h3 class="section-header">9.1. Kết quả Đạt được</h3>
+                <ul>
+                    <li>Xây dựng hoàn chỉnh ứng dụng Web Quản lý Kho hàng đầy đủ tính năng nghiệp vụ, giao diện hiện đại, hỗ trợ in phiếu kho và xuất dữ liệu đối soát.</li>
+                    <li>Triển khai thành công cụm 10 container dịch vụ hoạt động đồng bộ, an toàn bằng Docker Compose.</li>
+                    <li>Nginx Reverse Proxy bảo vệ toàn diện với SSL tự ký và đầy đủ các HTTP Security Headers.</li>
+                    <li>Hệ thống giám sát thời gian thực ổn định với Prometheus và Grafana Dashboards tự động nạp cấu hình.</li>
+                    <li>Hệ thống gom log tập trung Loki + Promtail và thực thi chính xác 3 câu truy vấn LogQL nghiệp vụ.</li>
+                    <li>Tuân thủ đầy đủ các chuẩn mực bảo mật hệ thống (Network Isolation, Non-root user, Resource limits) và quy trình Git chuyên nghiệp.</li>
+                </ul>
+
+                <h3 class="section-header">9.2. Hướng Phát triển Nâng cấp</h3>
+                <ul>
+                    <li>Tích hợp đường ống CI/CD với GitHub Actions tự động kiểm thử và triển khai tự động.</li>
+                    <li>Nâng cấp chứng chỉ SSL tự ký sang chứng chỉ Let's Encrypt với Certbot tự động gia hạn.</li>
+                    <li>Mở rộng triển khai lên Kubernetes (K8s/K3s) hỗ trợ Auto-scaling và Self-healing.</li>
+                </ul>
+
+                <hr class="divider-line" />
+
+                <h2 class="chapter-header" style="font-size: 12pt;">TÀI LIỆU THAM KHẢO</h2>
+                <ol style="font-size: 10.5pt;">
+                    <li>Docker &amp; Docker Compose Official Documentation - https://docs.docker.com</li>
+                    <li>Nginx Reverse Proxy &amp; Hardening Guide - https://nginx.org/en/docs</li>
+                    <li>Prometheus &amp; Grafana Integration Manual - https://prometheus.io/docs</li>
+                    <li>Grafana Loki LogQL Query Language Reference - https://grafana.com/docs/loki/latest/logql</li>
+                    <li>CIS Docker Benchmark &amp; Container Security Best Practices.</li>
+                </ol>
+
+                <div style="margin-top: 26px; display: flex; justify-content: space-between; text-align: center;">
+                    <div style="width: 45%;">
+                        <p style="text-align: center; margin-bottom: 45px;"><strong>SINH VIÊN THỰC HIỆN</strong><br><em>(Ký và ghi rõ họ tên)</em></p>
+                        <p style="text-align: center; font-weight: 700;">Thân Phú Cường</p>
+                    </div>
+                    <div style="width: 45%;">
+                        <p style="text-align: center; margin-bottom: 45px;"><strong>GIẢNG VIÊN HƯỚNG DẪN</strong><br><em>(Ký và ghi rõ họ tên)</em></p>
+                        <p style="text-align: center; font-weight: 700;">TS. Vũ Văn Diện</p>
+                    </div>
+                </div>
+
+                <div class="page-footer">
+                    <span>Hệ thống Quản lý Kho hàng - Báo cáo Bài tập lớn</span>
+                    <span>Trang 14</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function setLayout(mode) {
+            const container = document.getElementById('pagesContainer');
+            const btnGrid = document.getElementById('btnGrid');
+            const btnSingle = document.getElementById('btnSingle');
+
+            if (mode === 'grid') {
+                container.classList.add('grid-layout');
+                btnGrid.classList.add('active');
+                btnSingle.classList.remove('active');
+            } else {
+                container.classList.remove('grid-layout');
+                btnSingle.classList.add('active');
+                btnGrid.classList.remove('active');
+            }
+        }
+
+        function changeZoom(val) {
+            const wrapper = document.getElementById('docWrapper');
+            const zoomVal = document.getElementById('zoomVal');
+            zoomVal.textContent = val + '%';
+            wrapper.style.transform = 'scale(' + (val / 100) + ')';
+        }
+
+        // Auto-detect screen size to fit nicely
+        window.addEventListener('DOMContentLoaded', () => {
+            const width = window.innerWidth;
+            const slider = document.getElementById('zoomRange');
+            if (width < 1600 && width >= 1200) {
+                slider.value = 75;
+                changeZoom(75);
+            } else if (width < 1200) {
+                setLayout('single');
+                slider.value = 90;
+                changeZoom(90);
+            } else {
+                slider.value = 85;
+                changeZoom(85);
+            }
+        });
+    </script>
+</body>
+</html>

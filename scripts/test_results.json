@@ -1,0 +1,62 @@
+[
+  {
+    "name": "10 Container Services",
+    "category": "Hạ tầng Container",
+    "status": "PASS",
+    "detail": "Tổng số 10/10 container đang hoạt động bình thường (UP)"
+  },
+  {
+    "name": "HTTP to HTTPS 301",
+    "category": "Nginx Gateway",
+    "status": "PASS",
+    "detail": "Chuyển hướng thành công 301 Moved Permanently tới https://localhost/"
+  },
+  {
+    "name": "HTTPS 443 Endpoint",
+    "category": "Bảo mật SSL/TLS",
+    "status": "PASS",
+    "detail": "Kết nối HTTPS thành công (HTTP 200), Server: nginx"
+  },
+  {
+    "name": "HTTP Security Headers",
+    "category": "Gia cố Bảo mật",
+    "status": "PASS",
+    "detail": "Đầy đủ 5 tiêu chuẩn: X-Frame-Options=SAMEORIGIN, X-Content-Type-Options=nosniff, X-XSS-Protection=1; mode=block, Referrer-Policy=no-referrer-when-downgrade, Content-Security-Policy=default-src 'self' http: https: data: blob: 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;"
+  },
+  {
+    "name": "Phân vùng Mạng (MySQL Port 3306)",
+    "category": "Gia cố Bảo mật",
+    "status": "PASS",
+    "detail": "Cổng 3306 không mở ra ngoài Host, cô lập tuyệt đối trong backend-net"
+  },
+  {
+    "name": "Bảo vệ Phiên Cookie (HttpOnly & SameSite)",
+    "category": "Bảo mật Web App",
+    "status": "PASS",
+    "detail": "Cookie cấu hình an toàn chống XSS & CSRF: PHPSESSID=dd90c2701e4fb0b6a4f9fb1895f8a68f; path=/; HttpOnly; SameSite=Lax"
+  },
+  {
+    "name": "Prometheus Scrape Targets",
+    "category": "Giám sát Hệ thống",
+    "status": "PASS",
+    "detail": "Thu thập chỉ số thành công từ 3/3 jobs UP: ['mysql', 'node_exporter', 'prometheus']"
+  },
+  {
+    "name": "Grafana Dashboard Service",
+    "category": "Giám sát Hệ thống",
+    "status": "PASS",
+    "detail": "Grafana phản hồi trạng thái: ok, Phiên bản: 10.3.3"
+  },
+  {
+    "name": "Loki Centralized Logging",
+    "category": "Quản lý Log Tập trung",
+    "status": "FAIL",
+    "detail": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+  },
+  {
+    "name": "Sinh Log Giao Dịch & LogQL Query 3",
+    "category": "Quản lý Log Tập trung",
+    "status": "PASS",
+    "detail": "Sinh log có cấu trúc {job=\"app\"} |= \"inventory_transactions\" |= \"ERROR\" thành công"
+  }
+]
