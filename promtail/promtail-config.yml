@@ -15,7 +15,7 @@ scrape_configs:
           - localhost
         labels:
           job: nginx
-          __path__: /var/log/nginx/*.log
+          __path__: /var/log/nginx/app_*.log
 
   - job_name: app
     static_configs:
